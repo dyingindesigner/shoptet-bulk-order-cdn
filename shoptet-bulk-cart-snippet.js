@@ -22,7 +22,7 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-remove-icon-ui";
+  const VERSION = "2026-04-21-desktop-20pct-larger";
 
   function shouldRenderBulk() {
     const path = String(location.pathname || "").toLowerCase().replace(/\/+$/, "") || "/";
@@ -571,8 +571,8 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) scale(.985);
-  width: min(980px, calc(100vw - 32px));
-  max-width: min(980px, calc(100vw - 32px));
+  width: min(1176px, calc(100vw - 32px));
+  max-width: min(1176px, calc(100vw - 32px));
   max-height: min(92dvh, 92vh);
   --bulk-bg: #ffffff;
   --bulk-surface: #f8fafc;
