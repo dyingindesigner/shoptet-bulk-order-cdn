@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shoptet Bulk Cart Helper (client-side only, no private API token).
  *
  * Features:
@@ -22,7 +22,7 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-cart-only-uifix";
+  const VERSION = "2026-04-21-utf8-text-fix";
 
   function isCartPage() {
     const path = String(location.pathname || "").toLowerCase();
