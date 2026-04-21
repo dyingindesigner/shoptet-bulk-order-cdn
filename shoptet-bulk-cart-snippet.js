@@ -22,7 +22,7 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-hide-homepage-only";
+  const VERSION = "2026-04-21-remove-icon-ui";
 
   function shouldRenderBulk() {
     const path = String(location.pathname || "").toLowerCase().replace(/\/+$/, "") || "/";
@@ -686,7 +686,7 @@
 .bulk-result-meta { font-size: 12px; color: var(--bulk-muted); margin-top: 2px; }
 .bulk-result-code { font-size: 12px; font-weight: 700; color: #334155; }
 .bulk-list { max-height: 340px; overflow: auto; }
-.bulk-row { display: grid; grid-template-columns: 52px 1fr auto auto auto; gap: 10px; align-items: center; padding: 9px 10px; border-bottom: 1px solid #f8fafc; }
+.bulk-row { display: grid; grid-template-columns: 52px 1fr auto auto auto 36px; gap: 10px; align-items: center; padding: 9px 10px; border-bottom: 1px solid #f8fafc; }
 .bulk-row.warn { background: #fffbeb; }
 .bulk-row.invalid { background: #fff1f2; border-left: 3px solid #ef4444; }
 .bulk-row img { width: 44px; height: 44px; object-fit: contain; background: #f8fafc; border-radius: 6px; }
@@ -707,8 +707,22 @@
 .bulk-price { text-align: right; min-width: 118px; }
 .bulk-price-unit { font-size: 12px; color: var(--bulk-muted); }
 .bulk-price-line { font-size: 14px; font-weight: 700; color: var(--bulk-text); margin-top: 1px; }
-.bulk-remove { border: none; background: transparent; color: #6b7280; cursor: pointer; font-size: 18px; padding: 4px; }
-.bulk-remove:hover { color: var(--bulk-danger); }
+.bulk-remove {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #be123c;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  justify-self: center;
+}
+.bulk-remove svg { width: 15px; height: 15px; display: block; }
+.bulk-remove:hover { background: #ffe4e6; border-color: #fda4af; color: #9f1239; }
 .bulk-footer { position: sticky; bottom: 0; z-index: 3; flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
 .bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 120px; overflow: auto; line-height: 1.35; }
 .bulk-import-report { margin-top: 4px; font-size: 12px; color: #1f2937; line-height: 1.35; }
@@ -742,11 +756,10 @@
   }
   .bulk-content { grid-template-columns: 1fr; }
   .bulk-row {
-    grid-template-columns: 44px 1fr auto;
+    grid-template-columns: 44px 1fr auto auto;
     grid-template-areas:
-      "img info remove"
-      "img avail avail"
-      "img qty price";
+      "img info avail avail"
+      "img qty price remove";
     gap: 6px 8px;
     align-items: center;
     padding: 10px 8px;
@@ -756,7 +769,7 @@
   .bulk-row > :nth-child(3) { grid-area: avail; text-align: left; min-width: 0; }
   .bulk-row > :nth-child(4) { grid-area: qty; justify-self: start; }
   .bulk-row > :nth-child(5) { grid-area: price; text-align: right; min-width: 90px; justify-self: end; }
-  .bulk-row > :nth-child(6) { grid-area: remove; justify-self: end; align-self: start; }
+  .bulk-row > :nth-child(6) { grid-area: remove; justify-self: center; align-self: center; }
   .bulk-row-title { font-size: 12.5px; line-height: 1.28; }
   .bulk-row-code { font-size: 11.5px; }
   .bulk-row-note, .bulk-row-suggest { font-size: 11.5px; }
@@ -1036,7 +1049,9 @@
       removeBtn.className = "bulk-remove";
       removeBtn.type = "button";
       removeBtn.title = "Odstrániť";
-      removeBtn.textContent = "🗑";
+      removeBtn.setAttribute("aria-label", "Odstrániť položku z draftu");
+      removeBtn.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 3h6l1 2h4v2h-1l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7H4V5h4l1-2Zm1.2 2h3.6l-.5-1h-2.6l-.5 1ZM8 7l1 13h6l1-13H8Zm2 2h2v9h-2V9Zm4 0h2v9h-2V9Z"/></svg>';
       removeBtn.addEventListener("click", () => {
         draftItems = draftItems.filter((x) => x.id !== it.id);
         renderDraftList();
