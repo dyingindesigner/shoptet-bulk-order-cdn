@@ -22,7 +22,16 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-overlay-center";
+  const VERSION = "2026-04-21-cart-only";
+
+  function isCartPage() {
+    const path = String(location.pathname || "").toLowerCase();
+    if (/(^|\/)(kosik|cart)(\/|$)/.test(path)) return true;
+    if (document.body && document.body.classList.contains("type-page-cart")) return true;
+    return !!document.querySelector('div.cart-inner[data-testid="tableCart"]');
+  }
+
+  if (!isCartPage()) return;
 
   const existingRoot = document.getElementById(ROOT_ID);
   if (existingRoot) existingRoot.remove();
@@ -119,16 +128,16 @@
       const rawQty = normalizeSpace(row[1] || "");
       if (!code && !rawQty) continue;
       if (!code) {
-        rowErrors.push(`Riadok ${i + 1}: chýba kód v stĺpci A.`);
+        rowErrors.push(`Riadok ${i + 1}: chĂ˝ba kĂłd v stÄşpci A.`);
         continue;
       }
       if (!rawQty) {
-        rowErrors.push(`Riadok ${i + 1}: chýba počet v stĺpci B.`);
+        rowErrors.push(`Riadok ${i + 1}: chĂ˝ba poÄŤet v stÄşpci B.`);
         continue;
       }
-      // Povolené sú iba pevné celé kladné čísla (bez desatiniek).
+      // PovolenĂ© sĂş iba pevnĂ© celĂ© kladnĂ© ÄŤĂ­sla (bez desatiniek).
       if (!/^[1-9]\d*$/.test(rawQty)) {
-        rowErrors.push(`Riadok ${i + 1}: počet "${rawQty}" nie je celé kladné číslo.`);
+        rowErrors.push(`Riadok ${i + 1}: poÄŤet "${rawQty}" nie je celĂ© kladnĂ© ÄŤĂ­slo.`);
         continue;
       }
       entries.push({ code, qty: Number.parseInt(rawQty, 10) });
@@ -172,9 +181,9 @@
 
   function formatLineTotal(unitStr, qty) {
     const n = parseUnitPriceSk(unitStr);
-    if (Number.isNaN(n)) return "—";
+    if (Number.isNaN(n)) return "â€”";
     return (
-      "€" +
+      "â‚¬" +
       (n * qty).toLocaleString("sk-SK", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -207,7 +216,7 @@
           id: typeof x.id === "string" ? x.id : nextId(),
           code: String(x.code || "").trim(),
           qty: Math.max(1, Number.parseInt(String(x.qty || 1), 10) || 1),
-          title: String(x.title || `Produkt · ${x.code || ""}`),
+          title: String(x.title || `Produkt Â· ${x.code || ""}`),
           href: String(x.href || ""),
           img: String(x.img || ""),
           unitPrice: normalizeUnitPriceText(x.unitPrice || ""),
@@ -256,11 +265,11 @@
         id: nextId(),
         code,
         qty,
-        title: `Produkt · ${code}`,
+        title: `Produkt Â· ${code}`,
         href: "",
         img: "",
         unitPrice: "",
-        avail: "Neoverené",
+        avail: "NeoverenĂ©",
         stockCount: null,
         resolved: false,
         invalid: false,
@@ -291,7 +300,7 @@
         lookupErrors += 1;
         row.invalid = false;
         row.resolved = false;
-        row.avail = "Neoverené";
+        row.avail = "NeoverenĂ©";
         row.suggestion = null;
         continue;
       }
@@ -345,7 +354,7 @@
       id: item.id || nextId(),
       code: String(item.code || "").trim(),
       qty: Math.max(1, Number.parseInt(String(item.qty || 1), 10) || 1),
-      title: item.title || `Produkt · ${item.code || ""}`,
+      title: item.title || `Produkt Â· ${item.code || ""}`,
       href: item.href || "",
       img: item.img || "",
       unitPrice: normalizeUnitPriceText(item.unitPrice || ""),
@@ -360,10 +369,10 @@
   }
 
   function renderAvailability(item) {
-    if (item.invalid) return { text: "Pravdepodobne zlý kód", cls: "err" };
+    if (item.invalid) return { text: "Pravdepodobne zlĂ˝ kĂłd", cls: "err" };
     if (typeof item.stockCount === "number") return { text: `Sklad: ${item.stockCount} ks`, cls: "in-stock" };
     const a = normalizeSpace(item.avail);
-    if (!a) return { text: "Údaje nedostupné", cls: "muted" };
+    if (!a) return { text: "Ăšdaje nedostupnĂ©", cls: "muted" };
     if (/skladom|na\s+sklade/i.test(a)) return { text: a, cls: "in-stock" };
     if (/dotaz|objedn|vypredan|nedostup/i.test(a)) return { text: a, cls: "warn" };
     return { text: a, cls: "muted" };
@@ -399,7 +408,7 @@
         const img = imgRaw && !imgRaw.startsWith("http") ? origin + (imgRaw.startsWith("/") ? "" : "/") + imgRaw : imgRaw;
         const text = normalizeSpace(card.textContent || "");
         const codeMatch = text.match(
-          /(?:Kód|Kod|Obj\.\s*č\.|Obj\.\s*c\.|k[oó]d\s*v[ýy]robcu)\s*:?\s*([A-Z0-9][A-Z0-9\-\/.]*)/i
+          /(?:KĂłd|Kod|Obj\.\s*ÄŤ\.|Obj\.\s*c\.|k[oĂł]d\s*v[Ă˝y]robcu)\s*:?\s*([A-Z0-9][A-Z0-9\-\/.]*)/i
         );
         const code = codeMatch ? codeMatch[1] : "";
         const priceEl =
@@ -479,7 +488,7 @@
       s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
       s.async = true;
       s.onload = () => resolve(window.XLSX);
-      s.onerror = () => reject(new Error("Nepodarilo sa načítať XLSX parser."));
+      s.onerror = () => reject(new Error("Nepodarilo sa naÄŤĂ­taĹĄ XLSX parser."));
       document.head.appendChild(s);
     });
     return xlsxLoaderPromise;
@@ -501,11 +510,11 @@
       const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "" });
       return matrixToCodeEntries(matrix);
     }
-    throw new Error("Podporované formáty sú CSV, XLSX, XLS.");
+    throw new Error("PodporovanĂ© formĂˇty sĂş CSV, XLSX, XLS.");
   }
 
   function downloadCsvTemplate() {
-    // ";" delimiter kvôli Excel lokalizácii (SK/CZ), aby bol kód v A a počet v B.
+    // ";" delimiter kvĂ´li Excel lokalizĂˇcii (SK/CZ), aby bol kĂłd v A a poÄŤet v B.
     const csv = ["kod;pocet", "120853;2", "193886;1"].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -519,15 +528,7 @@
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-#${ROOT_ID} {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483643;
-  pointer-events: none;
-}
-#${ROOT_ID}.open {
-  pointer-events: auto;
-}
+#${ROOT_ID} { all: initial; }
 #${ROOT_ID}, #${ROOT_ID} * { box-sizing: border-box; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 #${ENTRY_HOST_ID} {
   display: flex;
@@ -544,27 +545,8 @@
   height: 40px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px;
 }
 #${FAB_ID}:hover { background: #0b1220; transform: translateY(-1px); box-shadow: 0 12px 24px rgba(0,0,0,.24); }
-.bulk-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483644;
-  background: rgba(15, 23, 42, 0.55);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .22s ease, visibility .22s ease;
-}
-#${ROOT_ID}.open .bulk-overlay {
-  opacity: 1;
-  visibility: visible;
-}
 #${DRAWER_ID} {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) scale(.985);
-  width: min(980px, calc(100vw - 32px));
-  max-width: min(980px, calc(100vw - 32px));
-  max-height: min(92dvh, 92vh);
+  position: fixed; right: 14px; bottom: 82px; width: min(980px, calc(100vw - 28px)); max-width: min(980px, calc(100vw - 28px)); max-height: 82vh;
   --bulk-bg: #ffffff;
   --bulk-surface: #f8fafc;
   --bulk-border: #e2e8f0;
@@ -574,27 +556,14 @@
   --bulk-accent-strong: #020617;
   --bulk-success: #15803d;
   --bulk-danger: #b91c1c;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  z-index: 2147483645;
-  box-shadow: 0 24px 64px rgba(0,0,0,.28);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; z-index: 2147483645;
+  box-shadow: 0 18px 48px rgba(0,0,0,.24); display: flex; flex-direction: column; overflow: hidden;
   box-sizing: border-box;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity .22s ease, transform .22s ease, visibility .22s ease;
+  opacity: 0; transform: translateY(12px) scale(.985); pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
 }
-#${ROOT_ID}.open #${DRAWER_ID} {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, -50%) scale(1);
-  pointer-events: auto;
-}
-.bulk-head { flex-shrink: 0; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#${DRAWER_ID}.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.bulk-head { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .bulk-head-title { font-weight: 700; font-size: clamp(18px, 1.8vw, 22px); color: var(--bulk-text); line-height: 1.2; letter-spacing: -0.01em; }
 .bulk-head-sub { font-size: 12px; color: var(--bulk-muted); margin-top: 2px; line-height: 1.35; }
 .bulk-head-actions { display: flex; gap: 8px; }
@@ -613,46 +582,19 @@
   opacity: 0;
   cursor: pointer;
 }
-.bulk-content {
-  padding: 12px 14px;
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 14px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: var(--bulk-bg);
+.bulk-file-input-native {
+  font-size: 12px;
+  color: var(--bulk-text);
+  max-width: 230px;
 }
+.bulk-content { padding: 12px 14px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; overflow: auto; background: var(--bulk-bg); }
 @media (max-width: 880px) { .bulk-content { grid-template-columns: 1fr; } }
 .bulk-card { border: 1px solid var(--bulk-border); border-radius: 10px; overflow: hidden; background: #fff; }
 .bulk-card-head { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 700; color: var(--bulk-text); background: #fafafa; }
 .bulk-card-body { padding: 10px 12px; }
 .bulk-help { font-size: 12px; color: var(--bulk-muted); line-height: 1.45; margin-bottom: 8px; }
-.bulk-input, .bulk-textarea {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  padding: 9px 10px;
-  color: var(--bulk-text);
-  background: #fff;
-  transition: border-color .16s ease, box-shadow .16s ease;
-}
-.bulk-input {
-  max-height: 120px;
-  overflow-x: auto;
-  overflow-y: auto;
-  word-break: break-word;
-}
-.bulk-textarea {
-  min-height: 78px;
-  max-height: 240px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  resize: vertical;
-}
+.bulk-input, .bulk-textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; padding: 9px 10px; color: var(--bulk-text); background: #fff; transition: border-color .16s ease, box-shadow .16s ease; }
+.bulk-textarea { min-height: 78px; resize: vertical; }
 .bulk-inline { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
 .bulk-search-results { margin-top: 8px; max-height: 210px; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; }
 .bulk-result { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center; padding: 8px 9px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
@@ -685,8 +627,8 @@
 .bulk-price-line { font-size: 14px; font-weight: 700; color: var(--bulk-text); margin-top: 1px; }
 .bulk-remove { border: none; background: transparent; color: #6b7280; cursor: pointer; font-size: 18px; padding: 4px; }
 .bulk-remove:hover { color: var(--bulk-danger); }
-.bulk-footer { flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
-.bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 120px; overflow: auto; line-height: 1.35; }
+.bulk-footer { border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
+.bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 80px; overflow: auto; line-height: 1.35; }
 .bulk-badge { display: inline-block; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; margin-left: 5px; vertical-align: middle; text-align: center; }
 .bulk-btn:focus-visible,
 .bulk-input:focus-visible,
@@ -707,11 +649,9 @@
   #${ENTRY_HOST_ID} { justify-content: stretch; margin-bottom: 10px; }
   #${FAB_ID} { width: 100%; justify-content: center; font-size: 14px; }
   #${DRAWER_ID} {
-    width: calc(100vw - 20px);
-    max-width: calc(100vw - 20px);
-    max-height: min(92dvh, 92vh);
-    border-radius: 14px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important;
+    width: auto !important; min-width: 0 !important; max-width: none !important;
+    max-height: 88vh; border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .bulk-content { grid-template-columns: 1fr; }
   .bulk-row {
@@ -757,71 +697,66 @@
   const fab = document.createElement("button");
   fab.id = FAB_ID;
   fab.type = "button";
-  fab.innerHTML = '🛒 <span>Bulk objednávanie</span><span class="bulk-badge" style="display:none">0</span>';
+  fab.innerHTML = 'đź›’ <span>Bulk objednĂˇvanie</span><span class="bulk-badge" style="display:none">0</span>';
 
   const drawer = document.createElement("section");
   drawer.id = DRAWER_ID;
-  drawer.setAttribute("role", "dialog");
-  drawer.setAttribute("aria-modal", "true");
-  drawer.setAttribute("aria-labelledby", "bulk-cart-dialog-title");
   drawer.innerHTML = `
     <div class="bulk-head">
       <div>
-        <div class="bulk-head-title" id="bulk-cart-dialog-title">Bulk pridanie do košíka</div>
-        <div class="bulk-head-sub">Náhľad položiek, úprava množstva a validácia kódov</div>
+        <div class="bulk-head-title">Bulk pridanie do koĹˇĂ­ka</div>
+        <div class="bulk-head-sub">NĂˇhÄľad poloĹľiek, Ăşprava mnoĹľstva a validĂˇcia kĂłdov</div>
       </div>
       <div class="bulk-head-actions">
-        <button type="button" class="bulk-btn" data-act="collapse">Schovať</button>
-        <button type="button" class="bulk-btn" data-act="close">Zavrieť</button>
+        <button type="button" class="bulk-btn" data-act="collapse">SchovaĹĄ</button>
+        <button type="button" class="bulk-btn" data-act="close">ZavrieĹĄ</button>
       </div>
     </div>
     <div class="bulk-content">
       <div class="bulk-card">
-        <div class="bulk-card-head">Vyhľadanie produktu (pridať do draftu)</div>
+        <div class="bulk-card-head">VyhÄľadanie produktu (pridaĹĄ do draftu)</div>
         <div class="bulk-card-body">
           <div class="bulk-help">
-            Napíšte názov alebo kód. Klik na výsledok pridá položku do draftu (neotvára detail produktu).
+            NapĂ­Ĺˇte nĂˇzov alebo kĂłd. Klik na vĂ˝sledok pridĂˇ poloĹľku do draftu (neotvĂˇra detail produktu).
           </div>
-          <input class="bulk-input" data-role="search-input" placeholder="napr. Eaton stykač 120853" />
+          <input class="bulk-input" data-role="search-input" placeholder="napr. Eaton stykaÄŤ 120853" />
           <div class="bulk-search-results" data-role="search-results"></div>
         </div>
       </div>
       <div class="bulk-card">
-        <div class="bulk-card-head">Pridať podľa kódov</div>
+        <div class="bulk-card-head">PridaĹĄ podÄľa kĂłdov</div>
         <div class="bulk-card-body">
-          <div class="bulk-help">Kódy oddeľte čiarkou, medzerou alebo novým riadkom. Alebo nahrajte CSV/XLSX súbor (stĺpce: <strong>kod</strong>, <strong>pocet</strong>).</div>
+          <div class="bulk-help">KĂłdy oddeÄľte ÄŤiarkou, medzerou alebo novĂ˝m riadkom. Alebo nahrajte CSV/XLSX sĂşbor (stÄşpce: <strong>kod</strong>, <strong>pocet</strong>).</div>
           <textarea class="bulk-textarea" data-role="code-input" placeholder="120853, 193886, EP-502537"></textarea>
           <div class="bulk-inline">
-            <button type="button" class="bulk-btn primary" data-act="codes-to-draft">Pridať kódy do draftu</button>
-            <button type="button" class="bulk-btn" data-act="clear-codes">Vyčistiť pole</button>
-            <button type="button" class="bulk-btn" data-act="download-template">Stiahnuť CSV šablónu</button>
-            <label class="bulk-btn bulk-file-label bulk-file-wrap">
-              Nahrať CSV/XLSX
-              <input class="bulk-file-input" data-role="file-input" type="file" accept=".csv,.xlsx,.xls" />
-            </label>
+            <button type="button" class="bulk-btn primary" data-act="codes-to-draft">PridaĹĄ kĂłdy do draftu</button>
+            <button type="button" class="bulk-btn" data-act="clear-codes">VyÄŤistiĹĄ pole</button>
+            <button type="button" class="bulk-btn" data-act="download-template">StiahnuĹĄ CSV ĹˇablĂłnu</button>
+            <span class="bulk-file-wrap">
+              <label class="bulk-btn bulk-file-label">
+                NahraĹĄ CSV/XLSX
+                <input class="bulk-file-input" data-role="file-input" type="file" accept=".csv,.xlsx,.xls" />
+              </label>
+              <input class="bulk-file-input-native" data-role="file-input-native" type="file" accept=".csv,.xlsx,.xls" />
+            </span>
           </div>
         </div>
       </div>
       <div class="bulk-card" style="grid-column: 1 / -1;">
-        <div class="bulk-card-head">Draft položiek pred vložením</div>
+        <div class="bulk-card-head">Draft poloĹľiek pred vloĹľenĂ­m</div>
         <div class="bulk-list" data-role="draft-list"></div>
       </div>
     </div>
     <div class="bulk-footer">
       <div class="bulk-inline">
-        <button type="button" class="bulk-btn" data-act="clear-draft">Vyčistiť draft</button>
-        <button type="button" class="bulk-btn" data-act="add-valid">Pridať iba validné</button>
-        <button type="button" class="bulk-btn green" data-act="add-all">Pridať do košíka</button>
+        <button type="button" class="bulk-btn" data-act="clear-draft">VyÄŤistiĹĄ draft</button>
+        <button type="button" class="bulk-btn" data-act="add-valid">PridaĹĄ iba validnĂ©</button>
+        <button type="button" class="bulk-btn green" data-act="add-all">PridaĹĄ do koĹˇĂ­ka</button>
       </div>
-      <div class="bulk-log" data-role="log">Pripravené.</div>
+      <div class="bulk-log" data-role="log">PripravenĂ©.</div>
     </div>
   `;
 
-  const backdrop = document.createElement("div");
-  backdrop.className = "bulk-overlay";
-  backdrop.setAttribute("data-act", "backdrop");
-  backdrop.setAttribute("aria-hidden", "true");
-  root.appendChild(backdrop);
   root.appendChild(drawer);
   document.body.appendChild(root);
 
@@ -871,6 +806,7 @@
   const searchResultsEl = drawer.querySelector('[data-role="search-results"]');
   const codeInputEl = drawer.querySelector('[data-role="code-input"]');
   const fileInputEl = drawer.querySelector('[data-role="file-input"]');
+  const fileInputNativeEl = drawer.querySelector('[data-role="file-input-native"]');
   const draftListEl = drawer.querySelector('[data-role="draft-list"]');
   const logEl = drawer.querySelector('[data-role="log"]');
 
@@ -912,7 +848,7 @@
   function renderDraftList() {
     draftListEl.innerHTML = "";
     if (!draftItems.length) {
-      draftListEl.innerHTML = '<div class="bulk-help" style="padding: 12px;">Draft je prázdny.</div>';
+      draftListEl.innerHTML = '<div class="bulk-help" style="padding: 12px;">Draft je prĂˇzdny.</div>';
       updateBadge();
       saveState();
       return;
@@ -924,33 +860,33 @@
       row.dataset.id = it.id;
       const note =
         it.invalid && it.suggestion
-          ? `<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div><div class="bulk-row-suggest">Nemysleli ste náhodou <button type="button" data-act="use-suggest">${it.suggestion.code}</button>?</div>`
+          ? `<div class="bulk-row-note">KĂłd je pravdepodobne nesprĂˇvny.</div><div class="bulk-row-suggest">Nemysleli ste nĂˇhodou <button type="button" data-act="use-suggest">${it.suggestion.code}</button>?</div>`
           : it.invalid
-            ? '<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div>'
+            ? '<div class="bulk-row-note">KĂłd je pravdepodobne nesprĂˇvny.</div>'
             : "";
       row.innerHTML = `
         <div>${it.img ? `<img src="${it.img}" alt="">` : ""}</div>
         <div>
-          <div class="bulk-row-title">${it.title || `Produkt · ${it.code}`}</div>
-          <div class="bulk-row-code">Kód: ${it.code}</div>
+          <div class="bulk-row-title">${it.title || `Produkt Â· ${it.code}`}</div>
+          <div class="bulk-row-code">KĂłd: ${it.code}</div>
           ${note}
         </div>
         <div class="bulk-avail ${av.cls}">${av.text}</div>
         <div class="bulk-qty">
-          <button type="button" data-act="minus">−</button>
+          <button type="button" data-act="minus">â’</button>
           <input type="number" min="1" max="9999" value="${it.qty}" />
           <button type="button" data-act="plus">+</button>
         </div>
         <div class="bulk-price">
-          <div class="bulk-price-unit">${it.unitPrice ? `${it.unitPrice} / ks` : "— / ks"}</div>
+          <div class="bulk-price-unit">${it.unitPrice ? `${it.unitPrice} / ks` : "â€” / ks"}</div>
           <div class="bulk-price-line">${formatLineTotal(it.unitPrice, it.qty)}</div>
         </div>
       `;
       const removeBtn = document.createElement("button");
       removeBtn.className = "bulk-remove";
       removeBtn.type = "button";
-      removeBtn.title = "Odstrániť";
-      removeBtn.textContent = "🗑";
+      removeBtn.title = "OdstrĂˇniĹĄ";
+      removeBtn.textContent = "đź—‘";
       removeBtn.addEventListener("click", () => {
         draftItems = draftItems.filter((x) => x.id !== it.id);
         renderDraftList();
@@ -987,7 +923,7 @@
           it.invalid = false;
           it.suggestion = null;
           renderDraftList();
-          setLog(`Použitý navrhnutý kód: ${it.code}`);
+          setLog(`PouĹľitĂ˝ navrhnutĂ˝ kĂłd: ${it.code}`);
         });
       }
 
@@ -1000,7 +936,7 @@
   function renderSearchResults(results) {
     searchResultsEl.innerHTML = "";
     if (!results || !results.length) {
-      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Žiadne výsledky.</div>';
+      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Ĺ˝iadne vĂ˝sledky.</div>';
       return;
     }
     results.forEach((r) => {
@@ -1008,19 +944,19 @@
       row.type = "button";
       row.className = "bulk-result";
       const availLabel =
-        typeof r.stockCount === "number" ? `Sklad: ${r.stockCount} ks` : r.avail || "Dostupnosť neznáma";
+        typeof r.stockCount === "number" ? `Sklad: ${r.stockCount} ks` : r.avail || "DostupnosĹĄ neznĂˇma";
       row.innerHTML = `
         <div>${r.img ? `<img src="${r.img}" alt="">` : ""}</div>
         <div>
           <div class="bulk-result-title">${r.title}</div>
-          <div class="bulk-result-meta">${availLabel} · ${r.unitPrice ? `${r.unitPrice} / ks` : "Cena neznáma"}</div>
+          <div class="bulk-result-meta">${availLabel} Â· ${r.unitPrice ? `${r.unitPrice} / ks` : "Cena neznĂˇma"}</div>
         </div>
         <div class="bulk-result-code">${r.code}</div>
       `;
       row.addEventListener("click", () => {
         upsertDraftItem({ ...r, qty: 1, id: nextId() });
         renderDraftList();
-        setLog(`Pridané do draftu: ${r.code}`);
+        setLog(`PridanĂ© do draftu: ${r.code}`);
       });
       searchResultsEl.appendChild(row);
     });
@@ -1030,11 +966,11 @@
     const { suppressFinalLog = false } = options;
     const normalizedEntries = mergeEntriesByCode(entries);
     if (!normalizedEntries.length) {
-      if (!suppressFinalLog) setLog("Zadajte aspoň jeden kód.");
+      if (!suppressFinalLog) setLog("Zadajte aspoĹ jeden kĂłd.");
       return { total: 0, invalidCodes: [] };
     }
 
-    setLog("Dopĺňam metadata z vyhľadávania...");
+    setLog("DopÄşĹam metadata z vyhÄľadĂˇvania...");
     const invalidCodes = [];
     for (const { code, qty } of normalizedEntries) {
       let meta = null;
@@ -1051,7 +987,7 @@
           id: nextId(),
           code,
           qty,
-          title: `Produkt · ${code}`,
+          title: `Produkt Â· ${code}`,
           href: "",
           img: "",
           unitPrice: "",
@@ -1069,8 +1005,8 @@
       const invalidCount = draftItems.filter((x) => x.invalid).length;
       setLog(
         invalidCount
-          ? `Kódy pridané do draftu. Pozor: ${invalidCount} položiek je označených ako pravdepodobne nesprávnych.`
-          : "Kódy pridané do draftu."
+          ? `KĂłdy pridanĂ© do draftu. Pozor: ${invalidCount} poloĹľiek je oznaÄŤenĂ˝ch ako pravdepodobne nesprĂˇvnych.`
+          : "KĂłdy pridanĂ© do draftu."
       );
     }
     return { total: normalizedEntries.length, invalidCodes };
@@ -1079,10 +1015,10 @@
   async function doSearch(query) {
     const q = normalizeSpace(query);
     if (q.length < 2) {
-      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Napíšte aspoň 2 znaky.</div>';
+      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">NapĂ­Ĺˇte aspoĹ 2 znaky.</div>';
       return;
     }
-    searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Hľadám...</div>';
+    searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">HÄľadĂˇm...</div>';
     if (searchAbortController) searchAbortController.abort();
     searchAbortController = new AbortController();
     try {
@@ -1091,7 +1027,7 @@
     } catch (e) {
       if (String(e || "").includes("AbortError")) return;
       searchResultsEl.innerHTML =
-        '<div class="bulk-help" style="padding: 10px;color:#b91c1c;">Vyhľadávanie zlyhalo.</div>';
+        '<div class="bulk-help" style="padding: 10px;color:#b91c1c;">VyhÄľadĂˇvanie zlyhalo.</div>';
     }
   }
 
@@ -1114,7 +1050,7 @@
 
   async function addItemsToCart(itemsToAdd, clearAddedFromDraft) {
     if (!itemsToAdd.length) {
-      setLog("Nie sú dostupné žiadne položky na pridanie.");
+      setLog("Nie sĂş dostupnĂ© Ĺľiadne poloĹľky na pridanie.");
       return;
     }
     if (
@@ -1122,7 +1058,7 @@
       !shoptet.cartShared ||
       typeof shoptet.cartShared.addToCart !== "function"
     ) {
-      setLog("Pridanie do košíka nie je momentálne dostupné. Obnovte stránku a skúste znova.");
+      setLog("Pridanie do koĹˇĂ­ka nie je momentĂˇlne dostupnĂ©. Obnovte strĂˇnku a skĂşste znova.");
       return;
     }
     const addAllBtn = drawer.querySelector('[data-act="add-all"]');
@@ -1135,14 +1071,14 @@
         shoptet.cartShared.addToCart({ productCode: it.code, amount: it.qty }, true);
         await sleep(180);
         dismissCartPopup();
-        lines.push(`OK ${it.code} × ${it.qty}`);
+        lines.push(`OK ${it.code} Ă— ${it.qty}`);
       } catch (e) {
         lines.push(`Chyba ${it.code}: ${e && e.message ? e.message : e}`);
       }
       setLog(lines.join("\n"));
       await sleep(260);
     }
-    lines.push("— hotovo —");
+    lines.push("â€” hotovo â€”");
     setLog(lines.join("\n"));
     if (clearAddedFromDraft) {
       const addedCodes = new Set(itemsToAdd.map((x) => String(x.code || "").toUpperCase()));
@@ -1155,12 +1091,12 @@
 
   async function addAllToCart() {
     if (!draftItems.length) {
-      setLog("Draft je prázdny.");
+      setLog("Draft je prĂˇzdny.");
       return;
     }
     const invalid = draftItems.filter((x) => x.invalid);
     if (invalid.length) {
-      setLog(`Najprv opravte alebo odstráňte položky s červeným stavom (${invalid.length}).`);
+      setLog(`Najprv opravte alebo odstrĂˇĹte poloĹľky s ÄŤervenĂ˝m stavom (${invalid.length}).`);
       return;
     }
     await addItemsToCart([...draftItems], true);
@@ -1168,58 +1104,56 @@
 
   async function addOnlyValidToCart() {
     if (!draftItems.length) {
-      setLog("Draft je prázdny.");
+      setLog("Draft je prĂˇzdny.");
       return;
     }
     const valid = draftItems.filter((x) => !x.invalid);
     if (!valid.length) {
-      setLog("V drafte nie sú žiadne validné položky.");
+      setLog("V drafte nie sĂş Ĺľiadne validnĂ© poloĹľky.");
       return;
     }
     await addItemsToCart(valid, true);
   }
 
-  let previousBodyOverflow = "";
-
   function openDrawer() {
-    previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    root.classList.add("open");
+    positionDrawer();
     drawer.classList.add("open");
   }
   function closeDrawer() {
-    root.classList.remove("open");
     drawer.classList.remove("open");
-    document.body.style.overflow = previousBodyOverflow || "";
   }
 
   function positionDrawer() {
-    /* Centrovaný modal — žiadne inline pozície */
+    if (window.innerWidth <= 980) {
+      drawer.style.left = "";
+      drawer.style.right = "";
+      drawer.style.top = "";
+      drawer.style.bottom = "";
+      drawer.style.width = "";
+      return;
+    }
+    const anchor = entryHost.getBoundingClientRect();
+    const width = Math.min(980, window.innerWidth - 28);
+    let left = Math.max(14, anchor.right - width);
+    left = Math.min(left, window.innerWidth - width - 14);
+    const top = Math.min(anchor.bottom + 10, window.innerHeight - 120);
+    drawer.style.left = `${left}px`;
+    drawer.style.top = `${top}px`;
+    drawer.style.right = "auto";
+    drawer.style.bottom = "auto";
+    drawer.style.width = `${width}px`;
   }
 
   fab.addEventListener("click", () => {
-    if (root.classList.contains("open")) closeDrawer();
+    if (drawer.classList.contains("open")) closeDrawer();
     else openDrawer();
   });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && root.classList.contains("open")) {
-      e.preventDefault();
-      closeDrawer();
-    }
-  });
-
-  backdrop.addEventListener("click", () => {
-    closeDrawer();
-  });
   drawer.querySelector('[data-act="close"]').addEventListener("click", () => {
     closeDrawer();
   });
   drawer.querySelector('[data-act="collapse"]').addEventListener("click", () => {
     closeDrawer();
-  });
-  drawer.addEventListener("click", (e) => {
-    e.stopPropagation();
   });
   drawer.querySelector('[data-act="clear-codes"]').addEventListener("click", () => {
     codeInputEl.value = "";
@@ -1237,38 +1171,38 @@
     try {
       const { entries, rowErrors } = await parseImportFile(file);
       if (rowErrors.length) {
-        setLog(`Import zlyhal. Opravte chyby v súbore:\n${rowErrors.slice(0, 8).join("\n")}`);
+        setLog(`Import zlyhal. Opravte chyby v sĂşbore:\n${rowErrors.slice(0, 8).join("\n")}`);
         return;
       }
       if (!entries.length) {
-        setLog("Súbor neobsahuje platné riadky. Očakávané sú stĺpce: A=kod, B=pocet.");
+        setLog("SĂşbor neobsahuje platnĂ© riadky. OÄŤakĂˇvanĂ© sĂş stÄşpce: A=kod, B=pocet.");
       } else {
         const merged = ingestEntriesWithoutLookup(entries);
-        setLog(`Súbor načítaný lokálne: ${merged.length} kódov. Overujem kódy...`);
+        setLog(`SĂşbor naÄŤĂ­tanĂ˝ lokĂˇlne: ${merged.length} kĂłdov. Overujem kĂłdy...`);
         const verify = await validateImportedCodes(merged);
         if (verify.invalidCodes.length) {
           const uniq = Array.from(new Set(verify.invalidCodes.map((x) => x.toUpperCase())));
           const suffix =
             verify.skippedCount > 0
-              ? `\nPoznámka: overených iba prvých ${verify.validatedCount} kódov (ďalších ${verify.skippedCount} čaká na manuálne overenie).`
+              ? `\nPoznĂˇmka: overenĂ˝ch iba prvĂ˝ch ${verify.validatedCount} kĂłdov (ÄŹalĹˇĂ­ch ${verify.skippedCount} ÄŤakĂˇ na manuĂˇlne overenie).`
               : "";
           const lookupWarn =
             verify.lookupErrors > 0
-              ? `\nPoznámka: ${verify.lookupErrors} kódov sa nepodarilo overiť (sieť/timeout).`
+              ? `\nPoznĂˇmka: ${verify.lookupErrors} kĂłdov sa nepodarilo overiĹĄ (sieĹĄ/timeout).`
               : "";
           setLog(
-            `Import dokončený s chybou: neplatné kódy (${uniq.length})\n${uniq.slice(0, 12).join(", ")}${suffix}${lookupWarn}`
+            `Import dokonÄŤenĂ˝ s chybou: neplatnĂ© kĂłdy (${uniq.length})\n${uniq.slice(0, 12).join(", ")}${suffix}${lookupWarn}`
           );
         } else if (verify.skippedCount > 0) {
           setLog(
-            `Import načítaný: ${merged.length} kódov. Overených prvých ${verify.validatedCount}, ďalších ${verify.skippedCount} zostalo neoverených.`
+            `Import naÄŤĂ­tanĂ˝: ${merged.length} kĂłdov. OverenĂ˝ch prvĂ˝ch ${verify.validatedCount}, ÄŹalĹˇĂ­ch ${verify.skippedCount} zostalo neoverenĂ˝ch.`
           );
         } else if (verify.lookupErrors > 0) {
           setLog(
-            `Import načítaný: ${merged.length} kódov. Overenie nedokončené pre ${verify.lookupErrors} položiek (sieť/timeout).`
+            `Import naÄŤĂ­tanĂ˝: ${merged.length} kĂłdov. Overenie nedokonÄŤenĂ© pre ${verify.lookupErrors} poloĹľiek (sieĹĄ/timeout).`
           );
         } else {
-          setLog(`Import v poriadku: načítaných a overených ${merged.length} kódov.`);
+          setLog(`Import v poriadku: naÄŤĂ­tanĂ˝ch a overenĂ˝ch ${merged.length} kĂłdov.`);
         }
       }
     } catch (err) {
@@ -1279,10 +1213,13 @@
   }
 
   fileInputEl.addEventListener("change", handleImportFileChange);
+  if (fileInputNativeEl) {
+    fileInputNativeEl.addEventListener("change", handleImportFileChange);
+  }
   drawer.querySelector('[data-act="clear-draft"]').addEventListener("click", () => {
     draftItems = [];
     renderDraftList();
-    setLog("Draft vyčistený.");
+    setLog("Draft vyÄŤistenĂ˝.");
   });
   drawer.querySelector('[data-act="add-all"]').addEventListener("click", async () => {
     await addAllToCart();
@@ -1312,6 +1249,6 @@
     applyEntryHostLayout();
     positionDrawer();
   });
-  setLog("Pripravené. Otvorte panel cez tlačidlo Bulk objednávanie.");
+  setLog("PripravenĂ©. Otvorte panel cez tlaÄŤidlo Bulk objednĂˇvanie.");
   window.__shoptetBulkCartVersion = VERSION;
 })();
