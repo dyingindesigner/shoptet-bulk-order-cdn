@@ -22,16 +22,16 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-cart-guard-strict";
+  const VERSION = "2026-04-21-hide-homepage-only";
 
-  function isCartPage() {
-    const path = String(location.pathname || "").toLowerCase();
-    if (/(^|\/)(kosik|cart)(\/|$)/.test(path)) return true;
-    if (document.body && document.body.classList.contains("type-page-cart")) return true;
-    return false;
+  function shouldRenderBulk() {
+    const path = String(location.pathname || "").toLowerCase().replace(/\/+$/, "") || "/";
+    if (path === "/") return false;
+    if (document.body && document.body.classList.contains("type-index")) return false;
+    return true;
   }
 
-  if (!isCartPage()) return;
+  if (!shouldRenderBulk()) return;
 
   const existingRoot = document.getElementById(ROOT_ID);
   if (existingRoot) existingRoot.remove();
