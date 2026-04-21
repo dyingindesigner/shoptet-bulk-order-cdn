@@ -22,7 +22,7 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-desktop-20pct-larger";
+  const VERSION = "2026-04-21-responsive-zindex-modern-ui-pass";
 
   function shouldRenderBulk() {
     const path = String(location.pathname || "").toLowerCase().replace(/\/+$/, "") || "/";
@@ -531,8 +531,19 @@
 #${ROOT_ID} {
   position: fixed;
   inset: 0;
-  z-index: 2147483643;
+  --bulk-z-overlay: 1400;
+  --bulk-z-modal: 1410;
+  --bulk-z-popover: 1420;
+  --bulk-modal-max: 1176px;
+  --bulk-page-gutter: clamp(10px, 2.2vw, 24px);
+  --bulk-space-1: clamp(8px, 0.8vw, 10px);
+  --bulk-space-2: clamp(10px, 1vw, 14px);
+  --bulk-space-3: clamp(12px, 1.2vw, 18px);
+  --bulk-radius-1: 10px;
+  --bulk-radius-2: 14px;
+  z-index: 1400;
   pointer-events: none;
+  isolation: isolate;
 }
 #${ROOT_ID}.open {
   pointer-events: auto;
@@ -556,7 +567,7 @@
 .bulk-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2147483644;
+  z-index: var(--bulk-z-overlay);
   background: rgba(15, 23, 42, 0.55);
   opacity: 0;
   visibility: hidden;
@@ -571,9 +582,9 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) scale(.985);
-  width: min(1176px, calc(100vw - 32px));
-  max-width: min(1176px, calc(100vw - 32px));
-  max-height: min(92dvh, 92vh);
+  width: min(var(--bulk-modal-max), calc(100vw - (var(--bulk-page-gutter) * 2)));
+  max-width: min(var(--bulk-modal-max), calc(100vw - (var(--bulk-page-gutter) * 2)));
+  max-height: min(92svh, 92dvh, 92vh);
   --bulk-bg: #ffffff;
   --bulk-surface: #f8fafc;
   --bulk-border: #e2e8f0;
@@ -585,8 +596,8 @@
   --bulk-danger: #b91c1c;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  z-index: 2147483645;
+  border-radius: var(--bulk-radius-2);
+  z-index: var(--bulk-z-modal);
   box-shadow: 0 24px 64px rgba(0,0,0,.28);
   display: flex;
   flex-direction: column;
@@ -603,11 +614,11 @@
   transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
 }
-.bulk-head { flex-shrink: 0; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bulk-head { flex-shrink: 0; padding: var(--bulk-space-2) var(--bulk-space-3); border-bottom: 1px solid #f1f5f9; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--bulk-space-1); }
 .bulk-head-title { font-weight: 700; font-size: clamp(18px, 1.8vw, 22px); color: var(--bulk-text); line-height: 1.2; letter-spacing: -0.01em; }
-.bulk-head-sub { font-size: 12px; color: var(--bulk-muted); margin-top: 2px; line-height: 1.35; }
+.bulk-head-sub { font-size: clamp(12px, 1.2vw, 13px); color: #475569; margin-top: 2px; line-height: 1.4; max-width: 44ch; }
 .bulk-head-actions { display: flex; gap: 8px; }
-.bulk-btn { border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 8px 11px; font-size: 13px; cursor: pointer; color: var(--bulk-text); transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+.bulk-btn { border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 8px 11px; min-height: 40px; font-size: clamp(13px, 1.1vw, 14px); cursor: pointer; color: var(--bulk-text); transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
 .bulk-btn:hover { background: var(--bulk-surface); transform: translateY(-1px); }
 .bulk-btn:active { transform: translateY(0); }
 .bulk-btn.primary { background: var(--bulk-accent); color: #fff; border-color: var(--bulk-accent); }
@@ -637,22 +648,26 @@
   cursor: pointer;
 }
 .bulk-content {
-  padding: 12px 14px;
+  padding: var(--bulk-space-2) var(--bulk-space-3);
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  gap: 14px;
+  gap: var(--bulk-space-2);
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  scroll-padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   -webkit-overflow-scrolling: touch;
   background: var(--bulk-bg);
 }
 @media (max-width: 880px) { .bulk-content { grid-template-columns: 1fr; } }
-.bulk-card { border: 1px solid var(--bulk-border); border-radius: 10px; overflow: hidden; background: #fff; }
+.bulk-card { border: 1px solid var(--bulk-border); border-radius: var(--bulk-radius-1); overflow: visible; background: #fff; }
+.bulk-card.bulk-search-card { position: relative; z-index: 1; }
+.bulk-card.bulk-search-card:focus-within { z-index: 5; }
 .bulk-card-head { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 700; color: var(--bulk-text); background: #fafafa; }
 .bulk-card-body { padding: 10px 12px; }
-.bulk-help { font-size: 12px; color: var(--bulk-muted); line-height: 1.45; margin-bottom: 8px; }
+.bulk-help { font-size: clamp(12px, 1.08vw, 13px); color: #475569; line-height: 1.45; margin-bottom: 8px; }
+.bulk-search-zone { position: relative; z-index: 2; isolation: isolate; }
 .bulk-input, .bulk-textarea {
   width: 100%;
   border: 1px solid #d1d5db;
@@ -677,15 +692,15 @@
   resize: vertical;
 }
 .bulk-inline { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
-.bulk-search-results { margin-top: 8px; max-height: 210px; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; }
-.bulk-result { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center; padding: 8px 9px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+.bulk-search-results { margin-top: 8px; max-height: min(34svh, 260px); overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; position: relative; z-index: var(--bulk-z-popover); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10); }
+.bulk-result { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center; padding: 8px 9px; border-bottom: 1px solid #f1f5f9; cursor: pointer; min-height: 52px; background: transparent; }
 .bulk-result:last-child { border-bottom: none; }
 .bulk-result:hover { background: var(--bulk-surface); }
 .bulk-result img { width: 44px; height: 44px; object-fit: contain; background: #f8fafc; border-radius: 6px; }
 .bulk-result-title { font-size: 13px; font-weight: 600; color: var(--bulk-text); }
 .bulk-result-meta { font-size: 12px; color: var(--bulk-muted); margin-top: 2px; }
 .bulk-result-code { font-size: 12px; font-weight: 700; color: #334155; }
-.bulk-list { max-height: 340px; overflow: auto; }
+.bulk-list { max-height: 340px; overflow: auto; scroll-padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .bulk-row { display: grid; grid-template-columns: 52px 1fr auto auto auto 36px; gap: 10px; align-items: center; padding: 9px 10px; border-bottom: 1px solid #f8fafc; }
 .bulk-row.warn { background: #fffbeb; }
 .bulk-row.invalid { background: #fff1f2; border-left: 3px solid #ef4444; }
@@ -702,14 +717,14 @@
 .bulk-avail.muted { color: var(--bulk-muted); font-weight: 500; }
 .bulk-avail.err { color: var(--bulk-danger); }
 .bulk-qty { display: inline-flex; align-items: center; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
-.bulk-qty button { width: 29px; height: 32px; border: none; background: #f8fafc; cursor: pointer; font-size: 18px; color: var(--bulk-text); }
-.bulk-qty input { width: 46px; height: 32px; border: none; text-align: center; font-size: 13px; }
+.bulk-qty button { width: 34px; height: 34px; border: none; background: #f8fafc; cursor: pointer; font-size: 18px; color: var(--bulk-text); }
+.bulk-qty input { width: 50px; height: 34px; border: none; text-align: center; font-size: 13px; }
 .bulk-price { text-align: right; min-width: 118px; }
 .bulk-price-unit { font-size: 12px; color: var(--bulk-muted); }
 .bulk-price-line { font-size: 14px; font-weight: 700; color: var(--bulk-text); margin-top: 1px; }
 .bulk-remove {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: 1px solid #fecaca;
   border-radius: 8px;
   background: #fff1f2;
@@ -723,7 +738,9 @@
 }
 .bulk-remove svg { width: 15px; height: 15px; display: block; }
 .bulk-remove:hover { background: #ffe4e6; border-color: #fda4af; color: #9f1239; }
-.bulk-footer { position: sticky; bottom: 0; z-index: 3; flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
+.bulk-footer { position: sticky; bottom: 0; z-index: 3; flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: var(--bulk-space-1) var(--bulk-space-3) calc(var(--bulk-space-1) + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; background: #fafafa; }
+.bulk-footer-actions { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bulk-log-wrap { min-width: 0; justify-self: end; text-align: right; }
 .bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 120px; overflow: auto; line-height: 1.35; }
 .bulk-import-report { margin-top: 4px; font-size: 12px; color: #1f2937; line-height: 1.35; }
 .bulk-import-report.warn { color: #7f1d1d; }
@@ -750,11 +767,25 @@
   #${DRAWER_ID} {
     width: calc(100vw - 20px);
     max-width: calc(100vw - 20px);
-    max-height: min(92dvh, 92vh);
+    max-height: min(94svh, 94dvh, 94vh);
     border-radius: 14px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .bulk-content { grid-template-columns: 1fr; }
+  .bulk-head { align-items: flex-start; }
+  .bulk-head-sub { max-width: 28ch; }
+  .bulk-footer {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .bulk-footer-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .bulk-footer-actions .bulk-btn { width: 100%; min-height: 44px; }
+  .bulk-footer-actions .bulk-btn.green { grid-column: 1 / -1; }
+  .bulk-log-wrap { justify-self: stretch; text-align: left; }
   .bulk-row {
     grid-template-columns: 44px 1fr auto auto;
     grid-template-areas:
@@ -776,8 +807,28 @@
   .bulk-avail { font-size: 11.5px; line-height: 1.2; }
   .bulk-price-unit { font-size: 11px; }
   .bulk-price-line { font-size: 14px; }
-  .bulk-qty button { width: 28px; height: 30px; }
-  .bulk-qty input { width: 42px; height: 30px; font-size: 12px; }
+  .bulk-qty button { width: 32px; height: 34px; }
+  .bulk-qty input { width: 44px; height: 34px; font-size: 12px; }
+}
+@media (max-width: 640px) {
+  #${DRAWER_ID} {
+    width: calc(100vw - 12px);
+    max-width: calc(100vw - 12px);
+    border-radius: 12px;
+  }
+  .bulk-head { padding: 10px 12px; }
+  .bulk-head-title { font-size: clamp(20px, 5.8vw, 30px); }
+  .bulk-head-sub { font-size: 12px; max-width: 24ch; }
+  .bulk-content { padding: 10px 12px; gap: 10px; }
+  .bulk-card-head { padding: 9px 10px; font-size: 12.5px; }
+  .bulk-card-body { padding: 9px 10px; }
+  .bulk-help { font-size: 13px; }
+  .bulk-input, .bulk-textarea { font-size: 16px; }
+}
+@media (pointer: coarse) {
+  .bulk-btn { min-height: 44px; }
+  .bulk-result { min-height: 56px; }
+  .bulk-remove { width: 44px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   #${FAB_ID},
@@ -816,14 +867,16 @@
       </div>
     </div>
     <div class="bulk-content">
-      <div class="bulk-card">
+      <div class="bulk-card bulk-search-card">
         <div class="bulk-card-head">Vyhľadanie produktu (pridať do draftu)</div>
         <div class="bulk-card-body">
           <div class="bulk-help">
             Napíšte názov alebo kód. Klik na výsledok pridá položku do draftu (neotvára detail produktu).
           </div>
-          <input class="bulk-input" data-role="search-input" placeholder="napr. Eaton stykač 120853" />
-          <div class="bulk-search-results" data-role="search-results"></div>
+          <div class="bulk-search-zone">
+            <input class="bulk-input" data-role="search-input" placeholder="napr. Eaton stykač 120853" autocomplete="off" autocapitalize="none" spellcheck="false" />
+            <div class="bulk-search-results" data-role="search-results"></div>
+          </div>
         </div>
       </div>
       <div class="bulk-card">
@@ -848,12 +901,12 @@
       </div>
     </div>
     <div class="bulk-footer">
-      <div class="bulk-inline">
+      <div class="bulk-footer-actions">
         <button type="button" class="bulk-btn" data-act="clear-draft">Vyčistiť draft</button>
         <button type="button" class="bulk-btn" data-act="add-valid">Pridať iba validné</button>
         <button type="button" class="bulk-btn green" data-act="add-all">Pridať do košíka</button>
       </div>
-      <div>
+      <div class="bulk-log-wrap">
         <div class="bulk-log" data-role="log">Pripravené.</div>
         <div class="bulk-import-report" data-role="import-report" hidden></div>
       </div>
