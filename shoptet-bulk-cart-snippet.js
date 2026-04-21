@@ -22,7 +22,7 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-cart-only";
+  const VERSION = "2026-04-21-cart-only-uifix";
 
   function isCartPage() {
     const path = String(location.pathname || "").toLowerCase();
@@ -528,7 +528,15 @@
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-#${ROOT_ID} { all: initial; }
+#${ROOT_ID} {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483643;
+  pointer-events: none;
+}
+#${ROOT_ID}.open {
+  pointer-events: auto;
+}
 #${ROOT_ID}, #${ROOT_ID} * { box-sizing: border-box; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 #${ENTRY_HOST_ID} {
   display: flex;
@@ -538,15 +546,34 @@
   margin: 0 0 14px 0;
 }
 #${FAB_ID} {
-  position: relative; z-index: 2147483644;
+  position: relative;
   border: none; border-radius: 10px; background: #111827; color: #fff; font-weight: 700;
   cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.18); font-size: 14px;
   transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
   height: 40px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px;
 }
 #${FAB_ID}:hover { background: #0b1220; transform: translateY(-1px); box-shadow: 0 12px 24px rgba(0,0,0,.24); }
+.bulk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483644;
+  background: rgba(15, 23, 42, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .22s ease, visibility .22s ease;
+}
+#${ROOT_ID}.open .bulk-overlay {
+  opacity: 1;
+  visibility: visible;
+}
 #${DRAWER_ID} {
-  position: fixed; right: 14px; bottom: 82px; width: min(980px, calc(100vw - 28px)); max-width: min(980px, calc(100vw - 28px)); max-height: 82vh;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(.985);
+  width: min(980px, calc(100vw - 32px));
+  max-width: min(980px, calc(100vw - 32px));
+  max-height: min(92dvh, 92vh);
   --bulk-bg: #ffffff;
   --bulk-surface: #f8fafc;
   --bulk-border: #e2e8f0;
@@ -556,14 +583,27 @@
   --bulk-accent-strong: #020617;
   --bulk-success: #15803d;
   --bulk-danger: #b91c1c;
-  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; z-index: 2147483645;
-  box-shadow: 0 18px 48px rgba(0,0,0,.24); display: flex; flex-direction: column; overflow: hidden;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  z-index: 2147483645;
+  box-shadow: 0 24px 64px rgba(0,0,0,.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
-  opacity: 0; transform: translateY(12px) scale(.985); pointer-events: none;
-  transition: opacity .22s ease, transform .22s ease;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease, visibility .22s ease;
 }
-#${DRAWER_ID}.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-.bulk-head { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#${ROOT_ID}.open #${DRAWER_ID} {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+.bulk-head { flex-shrink: 0; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .bulk-head-title { font-weight: 700; font-size: clamp(18px, 1.8vw, 22px); color: var(--bulk-text); line-height: 1.2; letter-spacing: -0.01em; }
 .bulk-head-sub { font-size: 12px; color: var(--bulk-muted); margin-top: 2px; line-height: 1.35; }
 .bulk-head-actions { display: flex; gap: 8px; }
@@ -582,19 +622,46 @@
   opacity: 0;
   cursor: pointer;
 }
-.bulk-file-input-native {
-  font-size: 12px;
-  color: var(--bulk-text);
-  max-width: 230px;
+.bulk-content {
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bulk-bg);
 }
-.bulk-content { padding: 12px 14px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; overflow: auto; background: var(--bulk-bg); }
 @media (max-width: 880px) { .bulk-content { grid-template-columns: 1fr; } }
 .bulk-card { border: 1px solid var(--bulk-border); border-radius: 10px; overflow: hidden; background: #fff; }
 .bulk-card-head { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 700; color: var(--bulk-text); background: #fafafa; }
 .bulk-card-body { padding: 10px 12px; }
 .bulk-help { font-size: 12px; color: var(--bulk-muted); line-height: 1.45; margin-bottom: 8px; }
-.bulk-input, .bulk-textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; padding: 9px 10px; color: var(--bulk-text); background: #fff; transition: border-color .16s ease, box-shadow .16s ease; }
-.bulk-textarea { min-height: 78px; resize: vertical; }
+.bulk-input, .bulk-textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  padding: 9px 10px;
+  color: var(--bulk-text);
+  background: #fff;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+.bulk-input {
+  max-height: 120px;
+  overflow-x: auto;
+  overflow-y: auto;
+  word-break: break-word;
+}
+.bulk-textarea {
+  min-height: 78px;
+  max-height: 240px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  resize: vertical;
+}
 .bulk-inline { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
 .bulk-search-results { margin-top: 8px; max-height: 210px; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; }
 .bulk-result { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center; padding: 8px 9px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
@@ -627,8 +694,8 @@
 .bulk-price-line { font-size: 14px; font-weight: 700; color: var(--bulk-text); margin-top: 1px; }
 .bulk-remove { border: none; background: transparent; color: #6b7280; cursor: pointer; font-size: 18px; padding: 4px; }
 .bulk-remove:hover { color: var(--bulk-danger); }
-.bulk-footer { border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
-.bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 80px; overflow: auto; line-height: 1.35; }
+.bulk-footer { flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
+.bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 120px; overflow: auto; line-height: 1.35; }
 .bulk-badge { display: inline-block; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; margin-left: 5px; vertical-align: middle; text-align: center; }
 .bulk-btn:focus-visible,
 .bulk-input:focus-visible,
@@ -649,9 +716,11 @@
   #${ENTRY_HOST_ID} { justify-content: stretch; margin-bottom: 10px; }
   #${FAB_ID} { width: 100%; justify-content: center; font-size: 14px; }
   #${DRAWER_ID} {
-    left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important;
-    width: auto !important; min-width: 0 !important; max-width: none !important;
-    max-height: 88vh; border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px);
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    max-height: min(92dvh, 92vh);
+    border-radius: 14px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .bulk-content { grid-template-columns: 1fr; }
   .bulk-row {
@@ -701,14 +770,16 @@
 
   const drawer = document.createElement("section");
   drawer.id = DRAWER_ID;
+  drawer.setAttribute("role", "dialog");
+  drawer.setAttribute("aria-modal", "true");
+  drawer.setAttribute("aria-labelledby", "bulk-cart-dialog-title");
   drawer.innerHTML = `
     <div class="bulk-head">
       <div>
-        <div class="bulk-head-title">Bulk pridanie do koĹˇĂ­ka</div>
+        <div class="bulk-head-title" id="bulk-cart-dialog-title">Bulk pridanie do koĹˇĂ­ka</div>
         <div class="bulk-head-sub">NĂˇhÄľad poloĹľiek, Ăşprava mnoĹľstva a validĂˇcia kĂłdov</div>
       </div>
       <div class="bulk-head-actions">
-        <button type="button" class="bulk-btn" data-act="collapse">SchovaĹĄ</button>
         <button type="button" class="bulk-btn" data-act="close">ZavrieĹĄ</button>
       </div>
     </div>
@@ -732,13 +803,10 @@
             <button type="button" class="bulk-btn primary" data-act="codes-to-draft">PridaĹĄ kĂłdy do draftu</button>
             <button type="button" class="bulk-btn" data-act="clear-codes">VyÄŤistiĹĄ pole</button>
             <button type="button" class="bulk-btn" data-act="download-template">StiahnuĹĄ CSV ĹˇablĂłnu</button>
-            <span class="bulk-file-wrap">
-              <label class="bulk-btn bulk-file-label">
-                NahraĹĄ CSV/XLSX
-                <input class="bulk-file-input" data-role="file-input" type="file" accept=".csv,.xlsx,.xls" />
-              </label>
-              <input class="bulk-file-input-native" data-role="file-input-native" type="file" accept=".csv,.xlsx,.xls" />
-            </span>
+            <label class="bulk-btn bulk-file-label bulk-file-wrap">
+              NahraĹĄ CSV/XLSX
+              <input class="bulk-file-input" data-role="file-input" type="file" accept=".csv,.xlsx,.xls" />
+            </label>
           </div>
         </div>
       </div>
@@ -757,6 +825,11 @@
     </div>
   `;
 
+  const backdrop = document.createElement("div");
+  backdrop.className = "bulk-overlay";
+  backdrop.setAttribute("data-act", "backdrop");
+  backdrop.setAttribute("aria-hidden", "true");
+  root.appendChild(backdrop);
   root.appendChild(drawer);
   document.body.appendChild(root);
 
@@ -806,7 +879,6 @@
   const searchResultsEl = drawer.querySelector('[data-role="search-results"]');
   const codeInputEl = drawer.querySelector('[data-role="code-input"]');
   const fileInputEl = drawer.querySelector('[data-role="file-input"]');
-  const fileInputNativeEl = drawer.querySelector('[data-role="file-input-native"]');
   const draftListEl = drawer.querySelector('[data-role="draft-list"]');
   const logEl = drawer.querySelector('[data-role="log"]');
 
@@ -1115,45 +1187,48 @@
     await addItemsToCart(valid, true);
   }
 
+  let previousBodyOverflow = "";
+
   function openDrawer() {
-    positionDrawer();
+    previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    fab.style.visibility = "hidden";
+    fab.style.pointerEvents = "none";
+    root.classList.add("open");
     drawer.classList.add("open");
   }
   function closeDrawer() {
+    root.classList.remove("open");
     drawer.classList.remove("open");
+    document.body.style.overflow = previousBodyOverflow || "";
+    fab.style.visibility = "visible";
+    fab.style.pointerEvents = "auto";
   }
 
   function positionDrawer() {
-    if (window.innerWidth <= 980) {
-      drawer.style.left = "";
-      drawer.style.right = "";
-      drawer.style.top = "";
-      drawer.style.bottom = "";
-      drawer.style.width = "";
-      return;
-    }
-    const anchor = entryHost.getBoundingClientRect();
-    const width = Math.min(980, window.innerWidth - 28);
-    let left = Math.max(14, anchor.right - width);
-    left = Math.min(left, window.innerWidth - width - 14);
-    const top = Math.min(anchor.bottom + 10, window.innerHeight - 120);
-    drawer.style.left = `${left}px`;
-    drawer.style.top = `${top}px`;
-    drawer.style.right = "auto";
-    drawer.style.bottom = "auto";
-    drawer.style.width = `${width}px`;
+    /* CentrovanĂ˝ modal â€” Ĺľiadne inline pozĂ­cie */
   }
 
   fab.addEventListener("click", () => {
-    if (drawer.classList.contains("open")) closeDrawer();
+    if (root.classList.contains("open")) closeDrawer();
     else openDrawer();
   });
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && root.classList.contains("open")) {
+      e.preventDefault();
+      closeDrawer();
+    }
+  });
+
+  backdrop.addEventListener("click", () => {
+    closeDrawer();
+  });
   drawer.querySelector('[data-act="close"]').addEventListener("click", () => {
     closeDrawer();
   });
-  drawer.querySelector('[data-act="collapse"]').addEventListener("click", () => {
-    closeDrawer();
+  drawer.addEventListener("click", (e) => {
+    e.stopPropagation();
   });
   drawer.querySelector('[data-act="clear-codes"]').addEventListener("click", () => {
     codeInputEl.value = "";
@@ -1213,9 +1288,6 @@
   }
 
   fileInputEl.addEventListener("change", handleImportFileChange);
-  if (fileInputNativeEl) {
-    fileInputNativeEl.addEventListener("change", handleImportFileChange);
-  }
   drawer.querySelector('[data-act="clear-draft"]').addEventListener("click", () => {
     draftItems = [];
     renderDraftList();
