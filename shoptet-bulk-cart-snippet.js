@@ -128,16 +128,16 @@
       const rawQty = normalizeSpace(row[1] || "");
       if (!code && !rawQty) continue;
       if (!code) {
-        rowErrors.push(`Riadok ${i + 1}: chĂ˝ba kĂłd v stÄşpci A.`);
+        rowErrors.push(`Riadok ${i + 1}: chýba kód v stĺpci A.`);
         continue;
       }
       if (!rawQty) {
-        rowErrors.push(`Riadok ${i + 1}: chĂ˝ba poÄŤet v stÄşpci B.`);
+        rowErrors.push(`Riadok ${i + 1}: chýba počet v stĺpci B.`);
         continue;
       }
-      // PovolenĂ© sĂş iba pevnĂ© celĂ© kladnĂ© ÄŤĂ­sla (bez desatiniek).
+      // Povolené sú iba pevné celé kladné čísla (bez desatiniek).
       if (!/^[1-9]\d*$/.test(rawQty)) {
-        rowErrors.push(`Riadok ${i + 1}: poÄŤet "${rawQty}" nie je celĂ© kladnĂ© ÄŤĂ­slo.`);
+        rowErrors.push(`Riadok ${i + 1}: počet "${rawQty}" nie je celé kladné číslo.`);
         continue;
       }
       entries.push({ code, qty: Number.parseInt(rawQty, 10) });
@@ -181,9 +181,9 @@
 
   function formatLineTotal(unitStr, qty) {
     const n = parseUnitPriceSk(unitStr);
-    if (Number.isNaN(n)) return "â€”";
+    if (Number.isNaN(n)) return "—";
     return (
-      "â‚¬" +
+      "€" +
       (n * qty).toLocaleString("sk-SK", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -216,7 +216,7 @@
           id: typeof x.id === "string" ? x.id : nextId(),
           code: String(x.code || "").trim(),
           qty: Math.max(1, Number.parseInt(String(x.qty || 1), 10) || 1),
-          title: String(x.title || `Produkt Â· ${x.code || ""}`),
+          title: String(x.title || `Produkt · ${x.code || ""}`),
           href: String(x.href || ""),
           img: String(x.img || ""),
           unitPrice: normalizeUnitPriceText(x.unitPrice || ""),
@@ -265,11 +265,11 @@
         id: nextId(),
         code,
         qty,
-        title: `Produkt Â· ${code}`,
+        title: `Produkt · ${code}`,
         href: "",
         img: "",
         unitPrice: "",
-        avail: "NeoverenĂ©",
+        avail: "Neoverené",
         stockCount: null,
         resolved: false,
         invalid: false,
@@ -300,7 +300,7 @@
         lookupErrors += 1;
         row.invalid = false;
         row.resolved = false;
-        row.avail = "NeoverenĂ©";
+        row.avail = "Neoverené";
         row.suggestion = null;
         continue;
       }
@@ -354,7 +354,7 @@
       id: item.id || nextId(),
       code: String(item.code || "").trim(),
       qty: Math.max(1, Number.parseInt(String(item.qty || 1), 10) || 1),
-      title: item.title || `Produkt Â· ${item.code || ""}`,
+      title: item.title || `Produkt · ${item.code || ""}`,
       href: item.href || "",
       img: item.img || "",
       unitPrice: normalizeUnitPriceText(item.unitPrice || ""),
@@ -369,10 +369,10 @@
   }
 
   function renderAvailability(item) {
-    if (item.invalid) return { text: "Pravdepodobne zlĂ˝ kĂłd", cls: "err" };
+    if (item.invalid) return { text: "Pravdepodobne zlý kód", cls: "err" };
     if (typeof item.stockCount === "number") return { text: `Sklad: ${item.stockCount} ks`, cls: "in-stock" };
     const a = normalizeSpace(item.avail);
-    if (!a) return { text: "Ăšdaje nedostupnĂ©", cls: "muted" };
+    if (!a) return { text: "Údaje nedostupné", cls: "muted" };
     if (/skladom|na\s+sklade/i.test(a)) return { text: a, cls: "in-stock" };
     if (/dotaz|objedn|vypredan|nedostup/i.test(a)) return { text: a, cls: "warn" };
     return { text: a, cls: "muted" };
@@ -408,7 +408,7 @@
         const img = imgRaw && !imgRaw.startsWith("http") ? origin + (imgRaw.startsWith("/") ? "" : "/") + imgRaw : imgRaw;
         const text = normalizeSpace(card.textContent || "");
         const codeMatch = text.match(
-          /(?:KĂłd|Kod|Obj\.\s*ÄŤ\.|Obj\.\s*c\.|k[oĂł]d\s*v[Ă˝y]robcu)\s*:?\s*([A-Z0-9][A-Z0-9\-\/.]*)/i
+          /(?:Kód|Kod|Obj\.\s*č\.|Obj\.\s*c\.|k[oó]d\s*v[ýy]robcu)\s*:?\s*([A-Z0-9][A-Z0-9\-\/.]*)/i
         );
         const code = codeMatch ? codeMatch[1] : "";
         const priceEl =
@@ -488,7 +488,7 @@
       s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
       s.async = true;
       s.onload = () => resolve(window.XLSX);
-      s.onerror = () => reject(new Error("Nepodarilo sa naÄŤĂ­taĹĄ XLSX parser."));
+      s.onerror = () => reject(new Error("Nepodarilo sa načítať XLSX parser."));
       document.head.appendChild(s);
     });
     return xlsxLoaderPromise;
@@ -510,11 +510,11 @@
       const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "" });
       return matrixToCodeEntries(matrix);
     }
-    throw new Error("PodporovanĂ© formĂˇty sĂş CSV, XLSX, XLS.");
+    throw new Error("Podporované formáty sú CSV, XLSX, XLS.");
   }
 
   function downloadCsvTemplate() {
-    // ";" delimiter kvĂ´li Excel lokalizĂˇcii (SK/CZ), aby bol kĂłd v A a poÄŤet v B.
+    // ";" delimiter kvôli Excel lokalizácii (SK/CZ), aby bol kód v A a počet v B.
     const csv = ["kod;pocet", "120853;2", "193886;1"].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -766,7 +766,7 @@
   const fab = document.createElement("button");
   fab.id = FAB_ID;
   fab.type = "button";
-  fab.innerHTML = 'đź›’ <span>Bulk objednĂˇvanie</span><span class="bulk-badge" style="display:none">0</span>';
+  fab.innerHTML = '🛒 <span>Bulk objednávanie</span><span class="bulk-badge" style="display:none">0</span>';
 
   const drawer = document.createElement("section");
   drawer.id = DRAWER_ID;
@@ -776,52 +776,52 @@
   drawer.innerHTML = `
     <div class="bulk-head">
       <div>
-        <div class="bulk-head-title" id="bulk-cart-dialog-title">Bulk pridanie do koĹˇĂ­ka</div>
-        <div class="bulk-head-sub">NĂˇhÄľad poloĹľiek, Ăşprava mnoĹľstva a validĂˇcia kĂłdov</div>
+        <div class="bulk-head-title" id="bulk-cart-dialog-title">Bulk pridanie do košíka</div>
+        <div class="bulk-head-sub">Náhľad položiek, úprava množstva a validácia kódov</div>
       </div>
       <div class="bulk-head-actions">
-        <button type="button" class="bulk-btn" data-act="close">ZavrieĹĄ</button>
+        <button type="button" class="bulk-btn" data-act="close">Zavrieť</button>
       </div>
     </div>
     <div class="bulk-content">
       <div class="bulk-card">
-        <div class="bulk-card-head">VyhÄľadanie produktu (pridaĹĄ do draftu)</div>
+        <div class="bulk-card-head">Vyhľadanie produktu (pridať do draftu)</div>
         <div class="bulk-card-body">
           <div class="bulk-help">
-            NapĂ­Ĺˇte nĂˇzov alebo kĂłd. Klik na vĂ˝sledok pridĂˇ poloĹľku do draftu (neotvĂˇra detail produktu).
+            Napíšte názov alebo kód. Klik na výsledok pridá položku do draftu (neotvára detail produktu).
           </div>
-          <input class="bulk-input" data-role="search-input" placeholder="napr. Eaton stykaÄŤ 120853" />
+          <input class="bulk-input" data-role="search-input" placeholder="napr. Eaton stykač 120853" />
           <div class="bulk-search-results" data-role="search-results"></div>
         </div>
       </div>
       <div class="bulk-card">
-        <div class="bulk-card-head">PridaĹĄ podÄľa kĂłdov</div>
+        <div class="bulk-card-head">Pridať podľa kódov</div>
         <div class="bulk-card-body">
-          <div class="bulk-help">KĂłdy oddeÄľte ÄŤiarkou, medzerou alebo novĂ˝m riadkom. Alebo nahrajte CSV/XLSX sĂşbor (stÄşpce: <strong>kod</strong>, <strong>pocet</strong>).</div>
+          <div class="bulk-help">Kódy oddeľte čiarkou, medzerou alebo novým riadkom. Alebo nahrajte CSV/XLSX súbor (stĺpce: <strong>kod</strong>, <strong>pocet</strong>).</div>
           <textarea class="bulk-textarea" data-role="code-input" placeholder="120853, 193886, EP-502537"></textarea>
           <div class="bulk-inline">
-            <button type="button" class="bulk-btn primary" data-act="codes-to-draft">PridaĹĄ kĂłdy do draftu</button>
-            <button type="button" class="bulk-btn" data-act="clear-codes">VyÄŤistiĹĄ pole</button>
-            <button type="button" class="bulk-btn" data-act="download-template">StiahnuĹĄ CSV ĹˇablĂłnu</button>
+            <button type="button" class="bulk-btn primary" data-act="codes-to-draft">Pridať kódy do draftu</button>
+            <button type="button" class="bulk-btn" data-act="clear-codes">Vyčistiť pole</button>
+            <button type="button" class="bulk-btn" data-act="download-template">Stiahnuť CSV šablónu</button>
             <label class="bulk-btn bulk-file-label bulk-file-wrap">
-              NahraĹĄ CSV/XLSX
+              Nahrať CSV/XLSX
               <input class="bulk-file-input" data-role="file-input" type="file" accept=".csv,.xlsx,.xls" />
             </label>
           </div>
         </div>
       </div>
       <div class="bulk-card" style="grid-column: 1 / -1;">
-        <div class="bulk-card-head">Draft poloĹľiek pred vloĹľenĂ­m</div>
+        <div class="bulk-card-head">Draft položiek pred vložením</div>
         <div class="bulk-list" data-role="draft-list"></div>
       </div>
     </div>
     <div class="bulk-footer">
       <div class="bulk-inline">
-        <button type="button" class="bulk-btn" data-act="clear-draft">VyÄŤistiĹĄ draft</button>
-        <button type="button" class="bulk-btn" data-act="add-valid">PridaĹĄ iba validnĂ©</button>
-        <button type="button" class="bulk-btn green" data-act="add-all">PridaĹĄ do koĹˇĂ­ka</button>
+        <button type="button" class="bulk-btn" data-act="clear-draft">Vyčistiť draft</button>
+        <button type="button" class="bulk-btn" data-act="add-valid">Pridať iba validné</button>
+        <button type="button" class="bulk-btn green" data-act="add-all">Pridať do košíka</button>
       </div>
-      <div class="bulk-log" data-role="log">PripravenĂ©.</div>
+      <div class="bulk-log" data-role="log">Pripravené.</div>
     </div>
   `;
 
@@ -920,7 +920,7 @@
   function renderDraftList() {
     draftListEl.innerHTML = "";
     if (!draftItems.length) {
-      draftListEl.innerHTML = '<div class="bulk-help" style="padding: 12px;">Draft je prĂˇzdny.</div>';
+      draftListEl.innerHTML = '<div class="bulk-help" style="padding: 12px;">Draft je prázdny.</div>';
       updateBadge();
       saveState();
       return;
@@ -932,33 +932,33 @@
       row.dataset.id = it.id;
       const note =
         it.invalid && it.suggestion
-          ? `<div class="bulk-row-note">KĂłd je pravdepodobne nesprĂˇvny.</div><div class="bulk-row-suggest">Nemysleli ste nĂˇhodou <button type="button" data-act="use-suggest">${it.suggestion.code}</button>?</div>`
+          ? `<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div><div class="bulk-row-suggest">Nemysleli ste náhodou <button type="button" data-act="use-suggest">${it.suggestion.code}</button>?</div>`
           : it.invalid
-            ? '<div class="bulk-row-note">KĂłd je pravdepodobne nesprĂˇvny.</div>'
+            ? '<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div>'
             : "";
       row.innerHTML = `
         <div>${it.img ? `<img src="${it.img}" alt="">` : ""}</div>
         <div>
-          <div class="bulk-row-title">${it.title || `Produkt Â· ${it.code}`}</div>
-          <div class="bulk-row-code">KĂłd: ${it.code}</div>
+          <div class="bulk-row-title">${it.title || `Produkt · ${it.code}`}</div>
+          <div class="bulk-row-code">Kód: ${it.code}</div>
           ${note}
         </div>
         <div class="bulk-avail ${av.cls}">${av.text}</div>
         <div class="bulk-qty">
-          <button type="button" data-act="minus">â’</button>
+          <button type="button" data-act="minus">−</button>
           <input type="number" min="1" max="9999" value="${it.qty}" />
           <button type="button" data-act="plus">+</button>
         </div>
         <div class="bulk-price">
-          <div class="bulk-price-unit">${it.unitPrice ? `${it.unitPrice} / ks` : "â€” / ks"}</div>
+          <div class="bulk-price-unit">${it.unitPrice ? `${it.unitPrice} / ks` : "— / ks"}</div>
           <div class="bulk-price-line">${formatLineTotal(it.unitPrice, it.qty)}</div>
         </div>
       `;
       const removeBtn = document.createElement("button");
       removeBtn.className = "bulk-remove";
       removeBtn.type = "button";
-      removeBtn.title = "OdstrĂˇniĹĄ";
-      removeBtn.textContent = "đź—‘";
+      removeBtn.title = "Odstrániť";
+      removeBtn.textContent = "🗑";
       removeBtn.addEventListener("click", () => {
         draftItems = draftItems.filter((x) => x.id !== it.id);
         renderDraftList();
@@ -995,7 +995,7 @@
           it.invalid = false;
           it.suggestion = null;
           renderDraftList();
-          setLog(`PouĹľitĂ˝ navrhnutĂ˝ kĂłd: ${it.code}`);
+          setLog(`Použitý navrhnutý kód: ${it.code}`);
         });
       }
 
@@ -1008,7 +1008,7 @@
   function renderSearchResults(results) {
     searchResultsEl.innerHTML = "";
     if (!results || !results.length) {
-      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Ĺ˝iadne vĂ˝sledky.</div>';
+      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Žiadne výsledky.</div>';
       return;
     }
     results.forEach((r) => {
@@ -1016,19 +1016,19 @@
       row.type = "button";
       row.className = "bulk-result";
       const availLabel =
-        typeof r.stockCount === "number" ? `Sklad: ${r.stockCount} ks` : r.avail || "DostupnosĹĄ neznĂˇma";
+        typeof r.stockCount === "number" ? `Sklad: ${r.stockCount} ks` : r.avail || "Dostupnosť neznáma";
       row.innerHTML = `
         <div>${r.img ? `<img src="${r.img}" alt="">` : ""}</div>
         <div>
           <div class="bulk-result-title">${r.title}</div>
-          <div class="bulk-result-meta">${availLabel} Â· ${r.unitPrice ? `${r.unitPrice} / ks` : "Cena neznĂˇma"}</div>
+          <div class="bulk-result-meta">${availLabel} · ${r.unitPrice ? `${r.unitPrice} / ks` : "Cena neznáma"}</div>
         </div>
         <div class="bulk-result-code">${r.code}</div>
       `;
       row.addEventListener("click", () => {
         upsertDraftItem({ ...r, qty: 1, id: nextId() });
         renderDraftList();
-        setLog(`PridanĂ© do draftu: ${r.code}`);
+        setLog(`Pridané do draftu: ${r.code}`);
       });
       searchResultsEl.appendChild(row);
     });
@@ -1038,11 +1038,11 @@
     const { suppressFinalLog = false } = options;
     const normalizedEntries = mergeEntriesByCode(entries);
     if (!normalizedEntries.length) {
-      if (!suppressFinalLog) setLog("Zadajte aspoĹ jeden kĂłd.");
+      if (!suppressFinalLog) setLog("Zadajte aspoň jeden kód.");
       return { total: 0, invalidCodes: [] };
     }
 
-    setLog("DopÄşĹam metadata z vyhÄľadĂˇvania...");
+    setLog("Dopĺňam metadata z vyhľadávania...");
     const invalidCodes = [];
     for (const { code, qty } of normalizedEntries) {
       let meta = null;
@@ -1059,7 +1059,7 @@
           id: nextId(),
           code,
           qty,
-          title: `Produkt Â· ${code}`,
+          title: `Produkt · ${code}`,
           href: "",
           img: "",
           unitPrice: "",
@@ -1077,8 +1077,8 @@
       const invalidCount = draftItems.filter((x) => x.invalid).length;
       setLog(
         invalidCount
-          ? `KĂłdy pridanĂ© do draftu. Pozor: ${invalidCount} poloĹľiek je oznaÄŤenĂ˝ch ako pravdepodobne nesprĂˇvnych.`
-          : "KĂłdy pridanĂ© do draftu."
+          ? `Kódy pridané do draftu. Pozor: ${invalidCount} položiek je označených ako pravdepodobne nesprávnych.`
+          : "Kódy pridané do draftu."
       );
     }
     return { total: normalizedEntries.length, invalidCodes };
@@ -1087,10 +1087,10 @@
   async function doSearch(query) {
     const q = normalizeSpace(query);
     if (q.length < 2) {
-      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">NapĂ­Ĺˇte aspoĹ 2 znaky.</div>';
+      searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Napíšte aspoň 2 znaky.</div>';
       return;
     }
-    searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">HÄľadĂˇm...</div>';
+    searchResultsEl.innerHTML = '<div class="bulk-help" style="padding: 10px;">Hľadám...</div>';
     if (searchAbortController) searchAbortController.abort();
     searchAbortController = new AbortController();
     try {
@@ -1099,7 +1099,7 @@
     } catch (e) {
       if (String(e || "").includes("AbortError")) return;
       searchResultsEl.innerHTML =
-        '<div class="bulk-help" style="padding: 10px;color:#b91c1c;">VyhÄľadĂˇvanie zlyhalo.</div>';
+        '<div class="bulk-help" style="padding: 10px;color:#b91c1c;">Vyhľadávanie zlyhalo.</div>';
     }
   }
 
@@ -1122,7 +1122,7 @@
 
   async function addItemsToCart(itemsToAdd, clearAddedFromDraft) {
     if (!itemsToAdd.length) {
-      setLog("Nie sĂş dostupnĂ© Ĺľiadne poloĹľky na pridanie.");
+      setLog("Nie sú dostupné žiadne položky na pridanie.");
       return;
     }
     if (
@@ -1130,7 +1130,7 @@
       !shoptet.cartShared ||
       typeof shoptet.cartShared.addToCart !== "function"
     ) {
-      setLog("Pridanie do koĹˇĂ­ka nie je momentĂˇlne dostupnĂ©. Obnovte strĂˇnku a skĂşste znova.");
+      setLog("Pridanie do košíka nie je momentálne dostupné. Obnovte stránku a skúste znova.");
       return;
     }
     const addAllBtn = drawer.querySelector('[data-act="add-all"]');
@@ -1143,14 +1143,14 @@
         shoptet.cartShared.addToCart({ productCode: it.code, amount: it.qty }, true);
         await sleep(180);
         dismissCartPopup();
-        lines.push(`OK ${it.code} Ă— ${it.qty}`);
+        lines.push(`OK ${it.code} × ${it.qty}`);
       } catch (e) {
         lines.push(`Chyba ${it.code}: ${e && e.message ? e.message : e}`);
       }
       setLog(lines.join("\n"));
       await sleep(260);
     }
-    lines.push("â€” hotovo â€”");
+    lines.push("— hotovo —");
     setLog(lines.join("\n"));
     if (clearAddedFromDraft) {
       const addedCodes = new Set(itemsToAdd.map((x) => String(x.code || "").toUpperCase()));
@@ -1163,12 +1163,12 @@
 
   async function addAllToCart() {
     if (!draftItems.length) {
-      setLog("Draft je prĂˇzdny.");
+      setLog("Draft je prázdny.");
       return;
     }
     const invalid = draftItems.filter((x) => x.invalid);
     if (invalid.length) {
-      setLog(`Najprv opravte alebo odstrĂˇĹte poloĹľky s ÄŤervenĂ˝m stavom (${invalid.length}).`);
+      setLog(`Najprv opravte alebo odstráňte položky s červeným stavom (${invalid.length}).`);
       return;
     }
     await addItemsToCart([...draftItems], true);
@@ -1176,12 +1176,12 @@
 
   async function addOnlyValidToCart() {
     if (!draftItems.length) {
-      setLog("Draft je prĂˇzdny.");
+      setLog("Draft je prázdny.");
       return;
     }
     const valid = draftItems.filter((x) => !x.invalid);
     if (!valid.length) {
-      setLog("V drafte nie sĂş Ĺľiadne validnĂ© poloĹľky.");
+      setLog("V drafte nie sú žiadne validné položky.");
       return;
     }
     await addItemsToCart(valid, true);
@@ -1206,7 +1206,7 @@
   }
 
   function positionDrawer() {
-    /* CentrovanĂ˝ modal â€” Ĺľiadne inline pozĂ­cie */
+    /* Centrovaný modal — žiadne inline pozície */
   }
 
   fab.addEventListener("click", () => {
@@ -1246,38 +1246,38 @@
     try {
       const { entries, rowErrors } = await parseImportFile(file);
       if (rowErrors.length) {
-        setLog(`Import zlyhal. Opravte chyby v sĂşbore:\n${rowErrors.slice(0, 8).join("\n")}`);
+        setLog(`Import zlyhal. Opravte chyby v súbore:\n${rowErrors.slice(0, 8).join("\n")}`);
         return;
       }
       if (!entries.length) {
-        setLog("SĂşbor neobsahuje platnĂ© riadky. OÄŤakĂˇvanĂ© sĂş stÄşpce: A=kod, B=pocet.");
+        setLog("Súbor neobsahuje platné riadky. Očakávané sú stĺpce: A=kod, B=pocet.");
       } else {
         const merged = ingestEntriesWithoutLookup(entries);
-        setLog(`SĂşbor naÄŤĂ­tanĂ˝ lokĂˇlne: ${merged.length} kĂłdov. Overujem kĂłdy...`);
+        setLog(`Súbor načítaný lokálne: ${merged.length} kódov. Overujem kódy...`);
         const verify = await validateImportedCodes(merged);
         if (verify.invalidCodes.length) {
           const uniq = Array.from(new Set(verify.invalidCodes.map((x) => x.toUpperCase())));
           const suffix =
             verify.skippedCount > 0
-              ? `\nPoznĂˇmka: overenĂ˝ch iba prvĂ˝ch ${verify.validatedCount} kĂłdov (ÄŹalĹˇĂ­ch ${verify.skippedCount} ÄŤakĂˇ na manuĂˇlne overenie).`
+              ? `\nPoznámka: overených iba prvých ${verify.validatedCount} kódov (ďalších ${verify.skippedCount} čaká na manuálne overenie).`
               : "";
           const lookupWarn =
             verify.lookupErrors > 0
-              ? `\nPoznĂˇmka: ${verify.lookupErrors} kĂłdov sa nepodarilo overiĹĄ (sieĹĄ/timeout).`
+              ? `\nPoznámka: ${verify.lookupErrors} kódov sa nepodarilo overiť (sieť/timeout).`
               : "";
           setLog(
-            `Import dokonÄŤenĂ˝ s chybou: neplatnĂ© kĂłdy (${uniq.length})\n${uniq.slice(0, 12).join(", ")}${suffix}${lookupWarn}`
+            `Import dokončený s chybou: neplatné kódy (${uniq.length})\n${uniq.slice(0, 12).join(", ")}${suffix}${lookupWarn}`
           );
         } else if (verify.skippedCount > 0) {
           setLog(
-            `Import naÄŤĂ­tanĂ˝: ${merged.length} kĂłdov. OverenĂ˝ch prvĂ˝ch ${verify.validatedCount}, ÄŹalĹˇĂ­ch ${verify.skippedCount} zostalo neoverenĂ˝ch.`
+            `Import načítaný: ${merged.length} kódov. Overených prvých ${verify.validatedCount}, ďalších ${verify.skippedCount} zostalo neoverených.`
           );
         } else if (verify.lookupErrors > 0) {
           setLog(
-            `Import naÄŤĂ­tanĂ˝: ${merged.length} kĂłdov. Overenie nedokonÄŤenĂ© pre ${verify.lookupErrors} poloĹľiek (sieĹĄ/timeout).`
+            `Import načítaný: ${merged.length} kódov. Overenie nedokončené pre ${verify.lookupErrors} položiek (sieť/timeout).`
           );
         } else {
-          setLog(`Import v poriadku: naÄŤĂ­tanĂ˝ch a overenĂ˝ch ${merged.length} kĂłdov.`);
+          setLog(`Import v poriadku: načítaných a overených ${merged.length} kódov.`);
         }
       }
     } catch (err) {
@@ -1291,7 +1291,7 @@
   drawer.querySelector('[data-act="clear-draft"]').addEventListener("click", () => {
     draftItems = [];
     renderDraftList();
-    setLog("Draft vyÄŤistenĂ˝.");
+    setLog("Draft vyčistený.");
   });
   drawer.querySelector('[data-act="add-all"]').addEventListener("click", async () => {
     await addAllToCart();
@@ -1321,6 +1321,6 @@
     applyEntryHostLayout();
     positionDrawer();
   });
-  setLog("PripravenĂ©. Otvorte panel cez tlaÄŤidlo Bulk objednĂˇvanie.");
+  setLog("Pripravené. Otvorte panel cez tlačidlo Bulk objednávanie.");
   window.__shoptetBulkCartVersion = VERSION;
 })();
