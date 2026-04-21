@@ -22,13 +22,13 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-ui-upgrades";
+  const VERSION = "2026-04-21-cart-guard-strict";
 
   function isCartPage() {
     const path = String(location.pathname || "").toLowerCase();
     if (/(^|\/)(kosik|cart)(\/|$)/.test(path)) return true;
     if (document.body && document.body.classList.contains("type-page-cart")) return true;
-    return !!document.querySelector('div.cart-inner[data-testid="tableCart"]');
+    return false;
   }
 
   if (!isCartPage()) return;
