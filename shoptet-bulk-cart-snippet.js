@@ -22,7 +22,7 @@
   const DRAWER_ID = "shoptet-bulk-cart-drawer";
   const STORAGE_KEY = "shoptet-bulk-cart-v2";
   const STYLE_ID = "shoptet-bulk-cart-style";
-  const VERSION = "2026-04-21-utf8-text-fix";
+  const VERSION = "2026-04-21-ui-upgrades";
 
   function isCartPage() {
     const path = String(location.pathname || "").toLowerCase();
@@ -612,8 +612,22 @@
 .bulk-btn:active { transform: translateY(0); }
 .bulk-btn.primary { background: var(--bulk-accent); color: #fff; border-color: var(--bulk-accent); }
 .bulk-btn.green { background: #16a34a; color: #fff; border-color: #16a34a; }
+.bulk-btn[disabled] { opacity: .68; cursor: not-allowed; transform: none; }
+.bulk-btn.is-loading::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  vertical-align: -2px;
+  animation: bulk-spin .8s linear infinite;
+}
 .bulk-file-wrap { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .bulk-file-label { display: inline-flex; align-items: center; position: relative; overflow: hidden; }
+.bulk-file-label.is-loading { opacity: .68; pointer-events: none; }
 .bulk-file-input {
   position: absolute;
   inset: 0;
@@ -681,6 +695,7 @@
 .bulk-row-note { margin-top: 2px; font-size: 12px; color: #b91c1c; font-weight: 600; }
 .bulk-row-suggest { margin-top: 2px; font-size: 12px; color: #be123c; }
 .bulk-row-suggest button { border: none; background: transparent; color: #be123c; text-decoration: underline; cursor: pointer; padding: 0; font-size: 12px; }
+.bulk-row-suggest .sep { color: #f43f5e; margin: 0 4px; }
 .bulk-avail { font-size: 12px; font-weight: 600; text-align: right; min-width: 106px; }
 .bulk-avail.in-stock { color: var(--bulk-success); }
 .bulk-avail.warn { color: var(--bulk-text); }
@@ -694,8 +709,11 @@
 .bulk-price-line { font-size: 14px; font-weight: 700; color: var(--bulk-text); margin-top: 1px; }
 .bulk-remove { border: none; background: transparent; color: #6b7280; cursor: pointer; font-size: 18px; padding: 4px; }
 .bulk-remove:hover { color: var(--bulk-danger); }
-.bulk-footer { flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
+.bulk-footer { position: sticky; bottom: 0; z-index: 3; flex-shrink: 0; border-top: 1px solid #f1f5f9; padding: 10px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; background: #fafafa; }
 .bulk-log { font-size: 12px; color: #374151; white-space: pre-wrap; max-height: 120px; overflow: auto; line-height: 1.35; }
+.bulk-import-report { margin-top: 4px; font-size: 12px; color: #1f2937; line-height: 1.35; }
+.bulk-import-report.warn { color: #7f1d1d; }
+.bulk-import-report.ok { color: #14532d; }
 .bulk-badge { display: inline-block; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; margin-left: 5px; vertical-align: middle; text-align: center; }
 .bulk-btn:focus-visible,
 .bulk-input:focus-visible,
@@ -757,6 +775,7 @@
     animation: none !important;
   }
 }
+@keyframes bulk-spin { to { transform: rotate(360deg); } }
 `;
   document.head.appendChild(style);
 
@@ -821,7 +840,10 @@
         <button type="button" class="bulk-btn" data-act="add-valid">Pridať iba validné</button>
         <button type="button" class="bulk-btn green" data-act="add-all">Pridať do košíka</button>
       </div>
-      <div class="bulk-log" data-role="log">Pripravené.</div>
+      <div>
+        <div class="bulk-log" data-role="log">Pripravené.</div>
+        <div class="bulk-import-report" data-role="import-report" hidden></div>
+      </div>
     </div>
   `;
 
@@ -881,12 +903,68 @@
   const fileInputEl = drawer.querySelector('[data-role="file-input"]');
   const draftListEl = drawer.querySelector('[data-role="draft-list"]');
   const logEl = drawer.querySelector('[data-role="log"]');
+  const importReportEl = drawer.querySelector('[data-role="import-report"]');
 
   const fileLabelEl = drawer.querySelector(".bulk-file-label");
+  const addCodesBtn = drawer.querySelector('[data-act="codes-to-draft"]');
+  const addAllBtn = drawer.querySelector('[data-act="add-all"]');
+  const addValidBtn = drawer.querySelector('[data-act="add-valid"]');
 
   function setLog(text) {
     logEl.textContent = String(text || "");
   }
+
+  function setImportReport(message, tone = "") {
+    if (!importReportEl) return;
+    importReportEl.hidden = !message;
+    importReportEl.className = "bulk-import-report" + (tone ? ` ${tone}` : "");
+    importReportEl.textContent = message ? String(message) : "";
+  }
+
+  function setButtonBusy(btn, busy, busyText) {
+    if (!btn) return;
+    if (busy) {
+      if (!btn.dataset.baseText) btn.dataset.baseText = btn.textContent;
+      btn.disabled = true;
+      btn.classList.add("is-loading");
+      if (busyText) btn.textContent = busyText;
+      return;
+    }
+    btn.disabled = false;
+    btn.classList.remove("is-loading");
+    if (btn.dataset.baseText) btn.textContent = btn.dataset.baseText;
+  }
+
+  function mergeDuplicateDraftRows() {
+    const merged = [];
+    const byCode = new Map();
+    for (const item of draftItems) {
+      const key = String(item.code || "").trim().toUpperCase();
+      if (!key) continue;
+      const existing = byCode.get(key);
+      if (!existing) {
+        byCode.set(key, item);
+        merged.push(item);
+        continue;
+      }
+      existing.qty = Math.max(1, Number.parseInt(String(existing.qty || 1), 10) + Number.parseInt(String(item.qty || 1), 10));
+      if (!existing.resolved && item.resolved) {
+        existing.title = item.title || existing.title;
+        existing.href = item.href || existing.href;
+        existing.img = item.img || existing.img;
+        existing.unitPrice = item.unitPrice || existing.unitPrice;
+        existing.avail = item.avail || existing.avail;
+        existing.stockCount = typeof item.stockCount === "number" ? item.stockCount : existing.stockCount;
+        existing.resolved = true;
+      }
+      if (existing.invalid && !item.invalid) {
+        existing.invalid = false;
+        existing.suggestion = null;
+      }
+    }
+    draftItems = merged;
+  }
+
   if (fileLabelEl && fileInputEl) {
     fileLabelEl.addEventListener("click", (e) => {
       // Default label->input activation usually works; this is a robust fallback.
@@ -932,7 +1010,7 @@
       row.dataset.id = it.id;
       const note =
         it.invalid && it.suggestion
-          ? `<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div><div class="bulk-row-suggest">Nemysleli ste náhodou <button type="button" data-act="use-suggest">${it.suggestion.code}</button>?</div>`
+          ? `<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div><div class="bulk-row-suggest">Nemysleli ste náhodou <button type="button" data-act="use-suggest">${it.suggestion.code}</button>?<span class="sep">|</span><button type="button" data-act="use-suggest-all">Použiť pre všetky podobné</button></div>`
           : it.invalid
             ? '<div class="bulk-row-note">Kód je pravdepodobne nesprávny.</div>'
             : "";
@@ -994,8 +1072,30 @@
           it.title = it.suggestion.title || it.suggestion.code;
           it.invalid = false;
           it.suggestion = null;
+          mergeDuplicateDraftRows();
           renderDraftList();
           setLog(`Použitý navrhnutý kód: ${it.code}`);
+        });
+      }
+      const suggestAllBtn = row.querySelector('[data-act="use-suggest-all"]');
+      if (suggestAllBtn) {
+        suggestAllBtn.addEventListener("click", () => {
+          if (!it.suggestion) return;
+          const targetCode = String(it.suggestion.code || "").trim();
+          if (!targetCode) return;
+          let changed = 0;
+          draftItems.forEach((entry) => {
+            if (!entry.invalid || !entry.suggestion) return;
+            if (String(entry.suggestion.code || "").trim().toUpperCase() !== targetCode.toUpperCase()) return;
+            entry.code = targetCode;
+            entry.title = entry.suggestion.title || targetCode;
+            entry.invalid = false;
+            entry.suggestion = null;
+            changed += 1;
+          });
+          mergeDuplicateDraftRows();
+          renderDraftList();
+          setLog(`Použitý navrhnutý kód ${targetCode} pre ${changed} položiek.`);
         });
       }
 
@@ -1120,7 +1220,7 @@
     if (overlay) overlay.style.display = "none";
   }
 
-  async function addItemsToCart(itemsToAdd, clearAddedFromDraft) {
+  async function addItemsToCart(itemsToAdd, clearAddedFromDraft, busyLabel) {
     if (!itemsToAdd.length) {
       setLog("Nie sú dostupné žiadne položky na pridanie.");
       return;
@@ -1133,10 +1233,8 @@
       setLog("Pridanie do košíka nie je momentálne dostupné. Obnovte stránku a skúste znova.");
       return;
     }
-    const addAllBtn = drawer.querySelector('[data-act="add-all"]');
-    const addValidBtn = drawer.querySelector('[data-act="add-valid"]');
-    addAllBtn.disabled = true;
-    addValidBtn.disabled = true;
+    setButtonBusy(addAllBtn, true, busyLabel || "Pridávam...");
+    setButtonBusy(addValidBtn, true, "Pridávam...");
     const lines = [];
     for (const it of itemsToAdd) {
       try {
@@ -1157,8 +1255,8 @@
       draftItems = draftItems.filter((x) => !addedCodes.has(String(x.code || "").toUpperCase()));
       renderDraftList();
     }
-    addAllBtn.disabled = false;
-    addValidBtn.disabled = false;
+    setButtonBusy(addAllBtn, false);
+    setButtonBusy(addValidBtn, false);
   }
 
   async function addAllToCart() {
@@ -1171,7 +1269,7 @@
       setLog(`Najprv opravte alebo odstráňte položky s červeným stavom (${invalid.length}).`);
       return;
     }
-    await addItemsToCart([...draftItems], true);
+    await addItemsToCart([...draftItems], true, "Pridávam všetko...");
   }
 
   async function addOnlyValidToCart() {
@@ -1184,7 +1282,7 @@
       setLog("V drafte nie sú žiadne validné položky.");
       return;
     }
-    await addItemsToCart(valid, true);
+    await addItemsToCart(valid, true, "Pridávam validné...");
   }
 
   let previousBodyOverflow = "";
@@ -1236,27 +1334,45 @@
   drawer.querySelector('[data-act="download-template"]').addEventListener("click", () => {
     downloadCsvTemplate();
   });
-  drawer.querySelector('[data-act="codes-to-draft"]').addEventListener("click", async () => {
+  addCodesBtn.addEventListener("click", async () => {
     const codes = parseCodes(codeInputEl.value);
-    await addCodeEntriesToDraft(codes.map((code) => ({ code, qty: 1 })));
+    try {
+      setButtonBusy(addCodesBtn, true, "Pridávam...");
+      await addCodeEntriesToDraft(codes.map((code) => ({ code, qty: 1 })));
+    } finally {
+      setButtonBusy(addCodesBtn, false);
+    }
   });
   async function handleImportFileChange(e) {
     const file = e.target && e.target.files ? e.target.files[0] : null;
     if (!file) return;
     try {
+      if (fileLabelEl) fileLabelEl.classList.add("is-loading");
       const { entries, rowErrors } = await parseImportFile(file);
       if (rowErrors.length) {
+        setImportReport(
+          `Import report: riadky s chybou ${rowErrors.length}. Opravte formát A=kod, B=pocet.`,
+          "warn"
+        );
         setLog(`Import zlyhal. Opravte chyby v súbore:\n${rowErrors.slice(0, 8).join("\n")}`);
         return;
       }
       if (!entries.length) {
+        setImportReport("Import report: 0 platných riadkov na spracovanie.", "warn");
         setLog("Súbor neobsahuje platné riadky. Očakávané sú stĺpce: A=kod, B=pocet.");
       } else {
         const merged = ingestEntriesWithoutLookup(entries);
         setLog(`Súbor načítaný lokálne: ${merged.length} kódov. Overujem kódy...`);
         const verify = await validateImportedCodes(merged);
+        const uniq = Array.from(new Set(verify.invalidCodes.map((x) => x.toUpperCase())));
+        const validCount = Math.max(0, verify.validatedCount - uniq.length - verify.lookupErrors);
+        const unresolvedCount = verify.lookupErrors + verify.skippedCount;
+        const reportTone = uniq.length || unresolvedCount ? "warn" : "ok";
+        setImportReport(
+          `Import report: načítané ${merged.length}, validné ${validCount}, neplatné ${uniq.length}, neoverené ${unresolvedCount}.`,
+          reportTone
+        );
         if (verify.invalidCodes.length) {
-          const uniq = Array.from(new Set(verify.invalidCodes.map((x) => x.toUpperCase())));
           const suffix =
             verify.skippedCount > 0
               ? `\nPoznámka: overených iba prvých ${verify.validatedCount} kódov (ďalších ${verify.skippedCount} čaká na manuálne overenie).`
@@ -1281,9 +1397,11 @@
         }
       }
     } catch (err) {
+      setImportReport("Import report: spracovanie sa nepodarilo dokončiť.", "warn");
       setLog(`Import zlyhal: ${err && err.message ? err.message : err}`);
     } finally {
       if (e.target) e.target.value = "";
+      if (fileLabelEl) fileLabelEl.classList.remove("is-loading");
     }
   }
 
